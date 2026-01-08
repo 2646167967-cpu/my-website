@@ -1,0 +1,2323 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>交互式个人简历与作品集-李璞</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 1;
+        }
+
+        /* 音乐控制按钮 */
+        .music-control {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            width: 50px;
+            height: 50px;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(10px);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #ff7832;
+            font-size: 1.5rem;
+            cursor: pointer;
+            z-index: 1000;
+            border: 1px solid rgba(255, 120, 50, 0.5);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s;
+        }
+
+        .music-control:hover {
+            background: rgba(0, 0, 0, 0.9);
+            transform: scale(1.1);
+            box-shadow: 0 0 20px rgba(255, 120, 50, 0.5);
+        }
+
+        .music-control.paused {
+            opacity: 0.7;
+        }
+
+        .music-control.paused .fa-volume-up {
+            display: none;
+        }
+
+        .music-control.paused .fa-volume-mute {
+            display: block;
+        }
+
+        .music-control .fa-volume-mute {
+            display: none;
+        }
+
+        /* 内容容器样式 */
+        .content-container {
+            position: relative;
+            z-index: 5;
+            padding: 20px;
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 30px; /* 减少间距 */
+        }
+
+        /* 个人简历区域 - 融入背景的修改 */
+        .resume-section {
+            background: rgba(0, 0, 0, 0.3); /* 降低不透明度 */
+            backdrop-filter: blur(15px) brightness(0.8); /* 增强模糊效果和降低亮度 */
+            border-radius: 20px;
+            padding: 40px;
+            border: 1px solid rgba(255, 120, 50, 0.15); /* 更淡的边框 */
+            box-shadow:
+                0 8px 32px rgba(0, 0, 0, 0.1), /* 更柔和的阴影 */
+                inset 0 1px 0 rgba(255, 255, 255, 0.05); /* 添加内发光增加层次感 */
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 40px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* 添加半透明覆盖层增强融合效果 */
+        .resume-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background:
+                radial-gradient(circle at 20% 80%, rgba(255, 120, 50, 0.08) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(255, 179, 71, 0.05) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        .resume-left {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .profile-image {
+            width: 200px;
+            height: 200px;
+            border-radius: 50%;
+            overflow: hidden;
+            margin-bottom: 25px;
+            border: 3px solid rgba(255, 120, 50, 0.5);
+            box-shadow: 0 0 20px rgba(255, 120, 50, 0.3);
+        }
+
+        .profile-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .contact-info {
+            width: 100%;
+            margin-top: 20px;
+        }
+
+        .contact-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+            color: rgba(238, 238, 238, 0.85); /* 降低对比度 */
+        }
+
+        .contact-item i {
+            width: 30px;
+            color: #ff7832;
+            font-size: 1.2rem;
+        }
+
+        .skills-container {
+            margin-top: 30px;
+            width: 100%;
+        }
+
+        .skill-item {
+            margin-bottom: 15px;
+        }
+
+        .skill-name {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+            color: rgba(238, 238, 238, 0.85); /* 降低对比度 */
+        }
+
+        .skill-bar {
+            height: 8px;
+            background: rgba(255, 255, 255, 0.05); /* 更透明的背景 */
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .skill-progress {
+            height: 100%;
+            background: linear-gradient(90deg, #ff7832, #ffb347);
+            border-radius: 4px;
+            width: 0;
+            transition: width 1.5s ease;
+        }
+
+        .resume-right h1 {
+            font-size: 3.5rem;
+            color: rgba(255, 120, 50, 0.9); /* 稍微降低饱和度 */
+            margin-bottom: 10px;
+        }
+
+        .resume-right h2 {
+            font-size: 1.5rem;
+            color: rgba(255, 179, 71, 0.8); /* 降低饱和度 */
+            margin-bottom: 30px;
+        }
+
+        .resume-right p {
+            color: rgba(221, 221, 221, 0.85); /* 稍微透明 */
+            line-height: 1.6;
+            margin-bottom: 30px;
+        }
+
+        .experience-item {
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid rgba(255, 120, 50, 0.2);
+        }
+
+        .experience-date {
+            color: rgba(255, 179, 71, 0.8); /* 降低饱和度 */
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .experience-title {
+            font-size: 1.3rem;
+            color: rgba(238, 238, 238, 0.9); /* 降低对比度 */
+            margin-bottom: 10px;
+        }
+
+        /* 中间交互区域 - 减小高度 */
+        .interaction-section {
+            height: 30vh; /* 从50vh减小到30vh */
+            position: relative;
+            z-index: 5;
+            cursor: pointer;
+        }
+
+        /* 项目展示区域 - 融入背景的修改 */
+        .projects-section {
+            background: rgba(0, 0, 0, 0.25); /* 更透明的背景 */
+            backdrop-filter: blur(15px) brightness(0.8);
+            border-radius: 20px;
+            padding: 40px;
+            border: 1px solid rgba(255, 120, 50, 0.15); /* 更淡的边框 */
+            box-shadow:
+                0 8px 32px rgba(0, 0, 0, 0.1),
+                inset 0 1px 0 rgba(255, 255, 255, 0.05);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .projects-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background:
+                radial-gradient(circle at 30% 30%, rgba(255, 120, 50, 0.06) 0%, transparent 50%),
+                radial-gradient(circle at 70% 70%, rgba(255, 179, 71, 0.04) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 50px;
+        }
+
+        .section-title {
+            font-size: 3rem;
+            color: rgba(255, 120, 50, 0.9); /* 降低饱和度 */
+            margin-bottom: 15px;
+        }
+
+        .section-subtitle {
+            color: rgba(221, 221, 221, 0.85); /* 稍微透明 */
+            font-size: 1.2rem;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        /* 翻转卡片样式 - 修改为每行两个项目 */
+        .projects-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr); /* 每行两个项目 */
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+
+        .project-card {
+            height: 400px;
+            perspective: 1000px;
+            cursor: pointer;
+        }
+
+        .card-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            text-align: center;
+            transition: transform 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            transform-style: preserve-3d;
+            border-radius: 20px;
+        }
+
+        .project-card:hover .card-inner {
+            transform: rotateY(180deg);
+        }
+
+        .card-front, .card-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            -webkit-backface-visibility: hidden;
+            backface-visibility: hidden;
+            border-radius: 20px;
+            padding: 30px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        .card-front {
+            background: rgba(0, 0, 0, 0.4); /* 更透明的黑色背景 */
+            backdrop-filter: blur(12px) brightness(0.85);
+            border: 1px solid rgba(255, 120, 50, 0.1); /* 更淡的边框 */
+            box-shadow:
+                0 10px 25px rgba(0, 0, 0, 0.2),
+                inset 0 1px 0 rgba(255, 255, 255, 0.05);
+        }
+
+        /* 移除卡片前的旋转动画边框 */
+        .card-front::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: conic-gradient(transparent, rgba(255, 120, 50, 0.3), transparent 30%);
+            animation: rotate 4s linear infinite;
+            z-index: -1;
+            display: none; /* 移除彩色旋转边框 */
+        }
+
+        @keyframes rotate {
+            100% { transform: rotate(360deg); }
+        }
+
+        .card-front::after {
+            content: '';
+            position: absolute;
+            inset: 5px;
+            background: rgba(0, 0, 0, 0.4); /* 与card-front背景一致 */
+            border-radius: 16px;
+            z-index: -1;
+        }
+
+        .card-back {
+            background: linear-gradient(135deg, rgba(255, 120, 50, 0.9), rgba(255, 179, 71, 0.9));
+            color: white;
+            transform: rotateY(180deg);
+            border: 1px solid rgba(255, 120, 50, 0.5);
+            justify-content: flex-start;
+            align-items: flex-start;
+            text-align: left;
+            padding: 30px;
+            overflow-y: auto;
+        }
+
+        .project-number {
+            font-size: 3rem;
+            font-weight: 800;
+            color: rgba(255, 120, 50, 0.07); /* 更淡的颜色 */
+            position: absolute;
+            top: 10px;
+            right: 20px;
+            line-height: 1;
+        }
+
+        .project-title {
+            font-size: 1.8rem;
+            color: rgba(255, 120, 50, 0.85); /* 降低饱和度 */
+            margin-bottom: 15px;
+            text-align: left;
+            width: 100%;
+        }
+
+        .card-back .project-title {
+            color: white;
+            font-size: 1.6rem;
+            margin-bottom: 20px;
+            text-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+
+        .project-description {
+            color: rgba(221, 221, 221, 0.8); /* 稍微透明 */
+            line-height: 1.6;
+            margin-bottom: 20px;
+            flex-grow: 1;
+            text-align: left;
+            width: 100%;
+        }
+
+        .card-back .project-description {
+            color: rgba(255, 255, 255, 0.95);
+            font-size: 1rem;
+            line-height: 1.7;
+            margin-bottom: 25px;
+        }
+
+        .project-tech {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 20px;
+            width: 100%;
+            justify-content: flex-start;
+        }
+
+        .tech-tag {
+            padding: 5px 12px;
+            background: rgba(255, 120, 50, 0.1); /* 更透明的背景 */
+            color: rgba(255, 179, 71, 0.8); /* 降低饱和度 */
+            border-radius: 20px;
+            font-size: 0.85rem;
+        }
+
+        .card-back .tech-tag {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .view-details {
+            display: flex;
+            align-items: center;
+            color: rgba(255, 120, 50, 0.9); /* 降低饱和度 */
+            font-weight: 600;
+            transition: color 0.3s;
+            position: absolute;
+            bottom: 30px;
+            left: 30px;
+        }
+
+        .view-details i {
+            margin-left: 8px;
+            transition: transform 0.3s;
+        }
+
+        .card-back .view-details {
+            color: white;
+            border: 2px solid white;
+            padding: 8px 20px;
+            border-radius: 30px;
+            margin-top: 20px;
+            position: static;
+        }
+
+        .project-features {
+            list-style: none;
+            margin-bottom: 25px;
+            width: 100%;
+        }
+
+        .project-features li {
+            padding: 8px 0;
+            color: rgba(255, 255, 255, 0.95);
+            display: flex;
+            align-items: center;
+            font-size: 0.95rem;
+        }
+
+        .project-features li i {
+            color: white;
+            margin-right: 10px;
+            font-size: 0.9rem;
+        }
+
+        /* 详情面板样式 - 简化版 */
+        .detail-panel {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0.9);
+            width: 90%;
+            max-width: 1000px;
+            height: 90vh;
+            background: rgba(0, 0, 0, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            border: 1px solid rgba(255, 120, 50, 0.5);
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            overflow: hidden;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .detail-panel.active {
+            opacity: 1;
+            visibility: visible;
+            transform: translate(-50%, -50%) scale(1);
+        }
+
+        .detail-header {
+            background: linear-gradient(90deg, rgba(255, 120, 50, 0.8), rgba(255, 179, 71, 0.8));
+            padding: 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .detail-title {
+            font-size: 2.2rem;
+            color: white;
+            font-weight: 700;
+        }
+
+        .close-panel {
+            width: 50px;
+            height: 50px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 50%;
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .close-panel:hover {
+            background: rgba(0, 0, 0, 0.5);
+            transform: rotate(90deg);
+        }
+
+        .detail-content {
+            padding: 30px;
+            overflow-y: auto;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .detail-media {
+            width: 100%;
+            height: 350px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, rgba(255, 120, 50, 0.1), rgba(255, 179, 71, 0.1));
+        }
+
+        .detail-media img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        .detail-media video {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        .detail-description {
+            color: #ddd;
+            line-height: 1.6;
+            margin-bottom: 30px;
+            font-size: 1.1rem;
+            flex-grow: 1;
+        }
+
+        .detail-features {
+            list-style: none;
+            margin-bottom: 30px;
+        }
+
+        .detail-features li {
+            padding: 10px 0;
+            color: #ddd;
+            display: flex;
+            align-items: center;
+        }
+
+        .detail-features li i {
+            color: #ff7832;
+            margin-right: 10px;
+        }
+
+        /* 遮罩层 */
+        .panel-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(5px);
+            z-index: 999;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s;
+        }
+
+        .panel-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        /* 轮播图样式 */
+        .media-carousel {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            border-radius: 15px;
+            background: rgba(0, 0, 0, 0.3);
+        }
+
+        .carousel-images {
+            display: flex;
+            transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            height: 100%;
+        }
+
+        .carousel-item {
+            min-width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .carousel-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        .carousel-item video {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        .carousel-controls {
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            display: flex;
+            justify-content: space-between;
+            transform: translateY(-50%);
+            padding: 0 15px;
+            z-index: 10;
+        }
+
+        .carousel-prev, .carousel-next {
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(255, 120, 50, 0.8);
+            color: white;
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 1.2rem;
+        }
+
+        .carousel-prev:hover, .carousel-next:hover {
+            background: rgba(255, 120, 50, 0.9);
+            transform: scale(1.1);
+        }
+
+        .carousel-indicators {
+            position: absolute;
+            bottom: 15px;
+            left: 0;
+            right: 0;
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            z-index: 10;
+        }
+
+        .carousel-indicator {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.3);
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s;
+            padding: 0;
+        }
+
+        .carousel-indicator.active {
+            background: #ff7832;
+            transform: scale(1.3);
+        }
+        /* 响应式设计 */
+        @media (max-width: 1024px) {
+            .resume-section {
+                grid-template-columns: 1fr;
+                gap: 30px;
+            }
+
+            .projects-grid {
+                grid-template-columns: repeat(2, 1fr); /* 中等屏幕保持两列 */
+            }
+
+            .interaction-section {
+                height: 25vh;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .content-container {
+                padding: 15px;
+                gap: 20px;
+            }
+
+            .resume-section, .projects-section {
+                padding: 25px;
+                background: rgba(0, 0, 0, 0.25); /* 移动端保持相同透明度 */
+            }
+
+            .resume-right h1 {
+                font-size: 2.5rem;
+            }
+
+            .section-title {
+                font-size: 2.5rem;
+            }
+
+            .projects-grid {
+                grid-template-columns: 1fr; /* 移动端改为单列 */
+            }
+
+            .interaction-section {
+                height: 20vh;
+            }
+
+            .detail-panel {
+                width: 95%;
+                height: 95vh;
+            }
+
+            .detail-media {
+                height: 250px;
+            }
+
+            .project-card {
+                height: 350px;
+            }
+
+            .music-control {
+                width: 45px;
+                height: 45px;
+                font-size: 1.3rem;
+                top: 15px;
+                right: 15px;
+            }
+        }
+
+        /* 动画 */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .animate-in {
+            animation: fadeInUp 0.6s ease forwards;
+        }
+    </style>
+</head>
+<body>
+    <!-- Three.js画布 -->
+    <canvas id="neural-network-canvas"></canvas>
+
+    <!-- 音乐控制按钮 -->
+    <div class="music-control" id="music-control">
+        <i class="fas fa-volume-up"></i>
+        <i class="fas fa-volume-mute"></i>
+    </div>
+
+    <!-- 主要内容容器 -->
+    <div class="content-container">
+        <!-- 个人简历区域 -->
+        <section class="resume-section animate-in">
+            <div class="resume-left">
+                <div class="profile-image">
+                    <img src="image/证件照.jpg" alt="个人头像">
+                </div>
+
+                <div class="contact-info">
+                    <div class="contact-item">
+                        <i class="fas fa-envelope"></i>
+                        <span>2646167967@qq.com</span>
+                    </div>
+                    <div class="contact-item">
+                        <i class="fas fa-phone"></i>
+                        <span>+86 1911-905-0985</span>
+                    </div>
+                    <div class="contact-item">
+                        <i class="fas fa-map-marker-alt"></i>
+                        <span>四川省达州市</span>
+                    </div>
+                    <div class="contact-item">
+                        <i class="fas fa-graduation-cap"></i>
+                        <span>成都理工大学 数字媒体技术专业</span>
+                    </div>
+                </div>
+
+                <div class="skills-container">
+                    <h3 style="color:rgba(255, 120, 50, 0.85); margin-bottom:20px;">核心技能</h3>
+                    <div class="skill-item">
+                        <div class="skill-name">
+                            <span>JavaScript/TypeScript</span>
+                            <span>80%</span>
+                        </div>
+                        <div class="skill-bar">
+                            <div class="skill-progress" data-width="80"></div>
+                        </div>
+                    </div>
+                    <div class="skill-item">
+                        <div class="skill-name">
+                            <span>React/Vue.js</span>
+                            <span>85%</span>
+                        </div>
+                        <div class="skill-bar">
+                            <div class="skill-progress" data-width="85"></div>
+                        </div>
+                    </div>
+                    <div class="skill-item">
+                        <div class="skill-name">
+                            <span>Three.js/WebGL</span>
+                            <span>90%</span>
+                        </div>
+                        <div class="skill-bar">
+                            <div class="skill-progress" data-width="90"></div>
+                        </div>
+                    </div>
+                    <div class="skill-item">
+                        <div class="skill-name">
+                            <span>UI/UX设计</span>
+                            <span>80%</span>
+                        </div>
+                        <div class="skill-bar">
+                            <div class="skill-progress" data-width="80"></div>
+                        </div>
+                    </div>
+                    <!-- 只保留7个技能条，删除多余的技能条 -->
+                    <div class="skill-item">
+                        <div class="skill-name">
+                            <span>Python</span>
+                            <span>80%</span>
+                        </div>
+                        <div class="skill-bar">
+                            <div class="skill-progress" data-width="80"></div>
+                        </div>
+                    </div>
+                    <div class="skill-item">
+                        <div class="skill-name">
+                            <span>Node.js</span>
+                            <span>82%</span>
+                        </div>
+                        <div class="skill-bar">
+                            <div class="skill-progress" data-width="82"></div>
+                        </div>
+                    </div>
+                    <div class="skill-item">
+                        <div class="skill-name">
+                            <span>AE</span>
+                            <span>88%</span>
+                        </div>
+                        <div class="skill-bar">
+                            <div class="skill-progress" data-width="88"></div>
+                        </div>
+                    </div>
+                    <!-- 删除了数据库设计、Docker、云服务(AWS/Azure)这三个技能条 -->
+                </div>
+            </div>
+
+            <div class="resume-right">
+                <h1>李璞</h1>
+                <h2>前端开发工程师 & UI/UX设计师</h2>
+
+                <p>
+                    数字媒体技术在读大学生，专注于Web前端开发和交互式数据可视化。热爱探索前沿技术，擅长将复杂数据转化为直观的可视化体验。
+                </p>
+
+                <h3 style="color:rgba(255, 120, 50, 0.85); margin-bottom:20px;">校园经历</h3>
+
+                <div class="experience-item">
+                    <div class="experience-date">2022.9 - 2025.7</div>
+                    <div class="experience-title">学习委员</div>
+                    <p>担任师生间的固定联络人，负责课程通知、作业收发与学习信息的上传下达，响应同学需求组织复习交流活动，并管理班级共享学习资料库，保障了各项学业协助工作与学习事务的顺畅运行。</p>
+                </div>
+
+                <div class="experience-item">
+                    <div class="experience-date">2022.9 - 2022.12</div>
+                    <div class="experience-title">SYB创新创业培训</div>
+                    <p>系统完成了"创办你的企业"（SYB）全部课程，深入学习了市场分析、团队管理、成本核算及财务规划等商业知识，并独立完成了一份结构完整的商业计划书，具备了将创意转化为可行项目的基础能力。</p>
+                </div>
+
+                <div class="experience-item">
+                    <div class="experience-date">2022.9 - 2024.1</div>
+                    <div class="experience-title">"母校行"大学宣传活动</div>
+                    <p>参与策划并执行返校宣讲活动。从内容准备、联系母校到现场宣讲与答疑，全程参与，锻炼了项目策划、公开表达及解决实际问题的综合能力。</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 中间交互区域 - 减小高度 -->
+        <section class="interaction-section" id="interaction-section"></section>
+
+        <!-- 项目展示区域 - 改为4个项目，每行两个 -->
+        <section class="projects-section">
+            <div class="section-header animate-in" style="animation-delay:0.2s">
+                <h2 class="section-title">项目作品集</h2>
+                <p class="section-subtitle">探索四个精心设计的项目，展示前沿技术与创新思维</p>
+            </div>
+
+            <div class="projects-grid">
+                <!-- 项目1 - 带有翻转效果 -->
+                <div class="project-card animate-in" data-project="1" style="animation-delay:0.3s">
+                    <div class="card-inner">
+                        <div class="card-front">
+                            <div class="project-number">01</div>
+                            <h3 class="project-title">AIGC动画-进化文明</h3>
+                            <p class="project-description">自主策划并主导制作了一部从宇宙起源演进至星际文明的宏大叙事AIGC动画短片。</p>
+                            <div class="project-tech">
+                                <span class="tech-tag">AIGC</span>
+                                <span class="tech-tag">通义万相</span>
+                                <span class="tech-tag">DaVinci Resolve</span>
+                            </div>
+                            <div class="view-details">
+                                查看详情 <i class="fas fa-arrow-right"></i>
+                            </div>
+                        </div>
+                        <div class="card-back">
+                            <h3 class="project-title">AIGC动画-进化文明</h3>
+                            <p class="project-description">自主策划并主导制作了一部从宇宙起源演进至星际文明的宏大叙事AIGC动画短片。</p>
+                            <ul class="project-features">
+                                <li><i class="fas fa-check"></i> 构建跨越138亿年的完整叙事与分镜设计</li>
+                                <li><i class="fas fa-check"></i> 运用文生图、图生视频提示词驱动AI生成</li>
+                                <li><i class="fas fa-check"></i> 完成后期剪辑、音画同步与节奏把控</li>
+                            </ul>
+                            <div class="project-tech">
+                                <span class="tech-tag">AIGC</span>
+                                <span class="tech-tag">通义万相</span>
+                                <span class="tech-tag">DaVinci Resolve </span>
+                                <span class="tech-tag">叙事设计</span>
+                            </div>
+                            <div class="view-details">
+                                点击查看详情 <i class="fas fa-external-link-alt"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 项目2 -->
+                <div class="project-card animate-in" data-project="2" style="animation-delay:0.4s">
+                    <div class="card-inner">
+                        <div class="card-front">
+                            <div class="project-number">02</div>
+                            <h3 class="project-title">AE特效合成短片-怀旧游戏</h3>
+                            <p class="project-description">结合动态图形与视觉特效制作的风格化动作短片，强调冲击性转场、能量特效与高节奏的视觉叙事。</p>
+                            <div class="project-tech">
+                                <span class="tech-tag">After Effects</span>
+                                <span class="tech-tag">动态设计</span>
+                                <span class="tech-tag">特效合成</span>
+                            </div>
+                            <div class="view-details">
+                                查看详情 <i class="fas fa-arrow-right"></i>
+                            </div>
+                        </div>
+                        <div class="card-back">
+                            <h3 class="project-title">AE特效合成短片-怀旧游戏</h3>
+                            <p class="project-description">独立创作的风格化动作视觉短片，通过AE特效与动态图形模拟怀旧战斗游戏的视觉张力，实现从分镜到合成的全流程制作。</p>
+                            <ul class="project-features">
+                                <li><i class="fas fa-check"></i> 打击感特效：冲击波、粒子爆发与动态模糊</li>
+                                <li><i class="fas fa-check"></i> 高速转场与文字动画的节奏化编辑</li>
+                                <li><i class="fas fa-check"></i> 风格化调色与镜头晃动模拟真实感</li>
+                            </ul>
+                            <div class="project-tech">
+                                <span class="tech-tag">Adobe After Effects</span>
+                                <span class="tech-tag">Saber</span>
+                                <span class="tech-tag">Particular</span>
+                                <span class="tech-tag">时间重映射</span>
+                            </div>
+                            <div class="view-details">
+                                点击查看详情 <i class="fas fa-external-link-alt"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 项目3 -->
+                <div class="project-card animate-in" data-project="3" style="animation-delay:0.5s">
+                    <div class="card-inner">
+                        <div class="card-front">
+                            <div class="project-number">03</div>
+                            <h3 class="project-title">智能交通检测系统</h3>
+                            <p class="project-description">基于YOLO深度学习的智能交通检测系统，实现车辆识别、跟踪与统计，支持实时视频流处理与数据分析。</p>
+                            <div class="project-tech">
+                                <span class="tech-tag">YOLOv8</span>
+                                <span class="tech-tag">Django</span>
+                                <span class="tech-tag">OpenCV</span>
+                            </div>
+                            <div class="view-details">
+                                查看详情 <i class="fas fa-arrow-right"></i>
+                            </div>
+                        </div>
+                        <div class="card-back">
+                            <h3 class="project-title">智能交通检测系统</h3>
+                            <p class="project-description">基于YOLOv8深度学习模型开发的智能交通检测平台，支持车辆检测、跟踪、计数与统计，应用于交通监控与管理场景。</p>
+                            <ul class="project-features">
+                                <li><i class="fas fa-check"></i> YOLOv8模型训练与部署，实现高精度车辆检测</li>
+                                <li><i class="fas fa-check"></i> 多目标跟踪算法，统计不重复车辆总数</li>
+                                <li><i class="fas fa-check"></i> 支持图片和视频流实时检测与处理</li>
+                                <li><i class="fas fa-check"></i> 用户认证系统与检测历史记录</li>
+                                <li><i class="fas fa-check"></i> 车辆类型分类统计与可视化报表</li>
+                                <li><i class="fas fa-check"></i> 后端API设计与MySQL数据存储</li>
+                            </ul>
+                            <div class="project-tech">
+                                <span class="tech-tag">YOLOv8</span>
+                                <span class="tech-tag">Django</span>
+                                <span class="tech-tag">OpenCV</span>
+                                <span class="tech-tag">MySQL</span>
+                                <span class="tech-tag">PyTorch</span>
+                                <span class="tech-tag">REST API</span>
+                            </div>
+                            <div class="view-details">
+                                点击查看详情 <i class="fas fa-external-link-alt"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 项目4 -->
+                <div class="project-card animate-in" data-project="4" style="animation-delay:0.6s">
+                    <div class="card-inner">
+                        <div class="card-front">
+                            <div class="project-number">04</div>
+                            <h3 class="project-title">Unity追逃游戏</h3>
+                            <p class="project-description">基于Unity引擎开发的3D单人追逃游戏，玩家扮演追逐者在单一关卡中追捕AI控制的逃跑者，包含智能寻路和动态障碍物系统。</p>
+                            <div class="project-tech">
+                                <span class="tech-tag">Unity3D</span>
+                                <span class="tech-tag">C#</span>
+                                <span class="tech-tag">AI寻路</span>
+                            </div>
+                            <div class="view-details">
+                                查看详情 <i class="fas fa-arrow-right"></i>
+                            </div>
+                        </div>
+                        <div class="card-back">
+                            <h3 class="project-title">Unity追逃游戏</h3>
+                            <p class="project-description">一款基于Unity引擎开发的3D单人追逃游戏，玩家扮演追逐者在精心设计的单一关卡中追捕由AI控制的逃跑者。游戏专注于核心玩法的打磨和优化。</p>
+                            <ul class="project-features">
+                                <li><i class="fas fa-check"></i> Unity3D引擎开发，支持PC平台</li>
+                                <li><i class="fas fa-check"></i> AI智能寻路系统，逃跑者根据环境动态调整路线</li>
+                                <li><i class="fas fa-check"></i> 玩家扮演追逐者，通过第三人称视角控制角色</li>
+                                <li><i class="fas fa-check"></i> 精心设计的单一关卡，专注于核心游戏体验</li>
+                            </ul>
+                            <div class="project-tech">
+                                <span class="tech-tag">Unity3D</span>
+                                <span class="tech-tag">C#</span>
+                                <span class="tech-tag">AI寻路</span>
+                                <span class="tech-tag">NavMesh</span>
+                                <span class="tech-tag">3D建模</span>
+                                <span class="tech-tag">动画系统</span>
+                            </div>
+                            <div class="view-details">
+                                点击查看详情 <i class="fas fa-external-link-alt"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- 项目详情面板 -->
+    <div class="detail-panel" id="detail-panel">
+        <div class="detail-header">
+            <h2 class="detail-title" id="panel-title">项目标题</h2>
+            <button class="close-panel" id="close-panel">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="detail-content" id="panel-content">
+            <!-- 动态内容 -->
+        </div>
+    </div>
+
+    <!-- 遮罩层 -->
+    <div class="panel-overlay" id="panel-overlay"></div>
+
+    <!-- Three.js导入映射 -->
+    <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.162.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.162.0/examples/jsm/"
+      }
+    }
+    </script>
+
+    <!-- 神经网络交互脚本 -->
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+        import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+        import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+        import { FilmPass } from 'three/addons/postprocessing/FilmPass.js';
+        import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
+
+        const config = {
+            paused: false,
+            activePaletteIndex: 1
+        };
+
+        const colorPalettes = [
+            [new THREE.Color(0x4F46E5), new THREE.Color(0x7C3AED), new THREE.Color(0xC026D3), new THREE.Color(0xDB2777), new THREE.Color(0x8B5CF6)],
+            [new THREE.Color(0xF59E0B), new THREE.Color(0xF97316), new THREE.Color(0xDC2626), new THREE.Color(0x7F1D1D), new THREE.Color(0xFBBF24)],
+            [new THREE.Color(0xEC4899), new THREE.Color(0x8B5CF6), new THREE.Color(0x6366F1), new THREE.Color(0x3B82F6), new THREE.Color(0xA855F7)],
+            [new THREE.Color(0x10B981), new THREE.Color(0xA3E635), new THREE.Color(0xFACC15), new THREE.Color(0xFB923C), new THREE.Color(0x4ADE80)]
+        ];
+
+        const scene = new THREE.Scene();
+        scene.fog = new THREE.FogExp2(0x000000, 0.0015);
+
+        const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1200);
+        camera.position.set(0, 5, 22);
+
+        const canvasElement = document.getElementById('neural-network-canvas');
+        const renderer = new THREE.WebGLRenderer({
+            canvas: canvasElement,
+            antialias: true,
+            powerPreference: "high-performance",
+            alpha: true
+        });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        renderer.setClearColor(0x000000, 0.5);
+        renderer.outputColorSpace = THREE.SRGBColorSpace;
+
+        function createStarfield() {
+            const count = 3000, pos = [];
+            for (let i = 0; i < count; i++) {
+                const r = THREE.MathUtils.randFloat(40, 120);
+                const phi = Math.acos(THREE.MathUtils.randFloatSpread(2));
+                const theta = THREE.MathUtils.randFloat(0, Math.PI * 2);
+                pos.push(
+                    r * Math.sin(phi) * Math.cos(theta),
+                    r * Math.sin(phi) * Math.sin(theta),
+                    r * Math.cos(phi)
+                );
+            }
+            const geo = new THREE.BufferGeometry();
+            geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+            const mat = new THREE.PointsMaterial({
+                color: 0xffffff,
+                size: 0.1,
+                sizeAttenuation: true,
+                depthWrite: false,
+                opacity: 0.6,
+                transparent: true
+            });
+            return new THREE.Points(geo, mat);
+        }
+        const starField = createStarfield();
+        scene.add(starField);
+
+        // 创建控件但禁用缩放
+        const controls = new OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.05;
+        controls.rotateSpeed = 0.5;
+        controls.minDistance = 15; // 设置最小距离防止过度缩放
+        controls.maxDistance = 25; // 设置最大距离防止过度缩放
+        controls.autoRotate = true;
+        controls.autoRotateSpeed = 0.15;
+        controls.enablePan = false;
+        controls.enableZoom = false; // 禁用缩放功能
+        controls.minPolarAngle = Math.PI / 6; // 限制上下旋转角度
+        controls.maxPolarAngle = Math.PI / 2;
+
+        const composer = new EffectComposer(renderer);
+        composer.addPass(new RenderPass(scene, camera));
+
+        const bloomPass = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 1.5, 0.4, 0.68);
+        composer.addPass(bloomPass);
+
+        const filmPass = new FilmPass(0.35, 0.55, 2048, false);
+        composer.addPass(filmPass);
+
+        composer.addPass(new OutputPass());
+
+        const pulseUniforms = {
+            uTime: { value: 0.0 },
+            uPulsePositions: { value: [new THREE.Vector3(1e3, 1e3, 1e3), new THREE.Vector3(1e3, 1e3, 1e3), new THREE.Vector3(1e3, 1e3, 1e3)] },
+            uPulseTimes: { value: [-1e3, -1e3, -1e3] },
+            uPulseColors: { value: [new THREE.Color(1, 1, 1), new THREE.Color(1, 1, 1), new THREE.Color(1, 1, 1)] },
+            uPulseSpeed: { value: 15.0 },
+            uBaseNodeSize: { value: 0.5 },
+            uActivePalette: { value: 0 }
+        };
+
+        const noiseFunctions = `
+        vec3 mod289(vec3 x){return x-floor(x*(1.0/289.0))*289.0;}
+        vec4 mod289(vec4 x){return x-floor(x*(1.0/289.0))*289.0;}
+        vec4 permute(vec4 x){return mod289(((x*34.0)+1.0)*x);}
+        vec4 taylorInvSqrt(vec4 r){return 1.79284291400159-0.85373472095314*r;}
+        float snoise(vec3 v){
+            const vec2 C=vec2(1.0/6.0,1.0/3.0);const vec4 D=vec4(0.0,0.5,1.0,2.0);
+            vec3 i=floor(v+dot(v,C.yyy));vec3 x0=v-i+dot(i,C.xxx);vec3 g=step(x0.yzx,x0.xyz);
+            vec3 l=1.0-g;vec3 i1=min(g.xyz,l.zxy);vec3 i2=max(g.xyz,l.zxy);
+            vec3 x1=x0-i1+C.xxx;vec3 x2=x0-i2+C.yyy;vec3 x3=x0-D.yyy;i=mod289(i);
+            vec4 p=permute(permute(permute(i.z+vec4(0.0,i1.z,i2.z,1.0))+i.y+vec4(0.0,i1.y,i2.y,1.0))+i.x+vec4(0.0,i1.x,i2.x,1.0));
+            float n_=0.142857142857;vec3 ns=n_*D.wyz-D.xzx;
+            vec4 j=p-49.0*floor(p*ns.z*ns.z);vec4 x_=floor(j*ns.z);vec4 y_=floor(j-7.0*x_);
+            vec4 x=x_*ns.x+ns.yyyy;vec4 y=y_*ns.x+ns.yyyy;vec4 h=1.0-abs(x)-abs(y);
+            vec4 b0=vec4(x.xy,y.xy);vec4 b1=vec4(x.zw,y.zw);vec4 s0=floor(b0)*2.0+1.0;vec4 s1=floor(b1)*2.0+1.0;
+            vec4 sh=-step(h,vec4(0.0));vec4 a0=b0.xzyw+s0.xzyw*sh.xxyy;vec4 a1=b1.xzyw+s1.xzyw*sh.zzww;
+            vec3 p0=vec3(a0.xy,h.x);vec3 p1=vec3(a0.zw,h.y);vec3 p2=vec3(a1.xy,h.z);vec3 p3=vec3(a1.zw,h.w);
+            vec4 norm=taylorInvSqrt(vec4(dot(p0,p0),dot(p1,p1),dot(p2,p2),dot(p3,p3)));
+            p0*=norm.x;p1*=norm.y;p2*=norm.z;p3*=norm.w;vec4 m=max(0.6-vec4(dot(x0,x0),dot(x1,x1),dot(x2,x2),dot(x3,x3)),0.0);
+            m*=m;return 42.0*dot(m*m,vec4(dot(p0,x0),dot(p1,x1),dot(p2,x2),dot(p3,x3)));
+        }
+        float fbm(vec3 p,float time){
+            float value=0.0;float amplitude=0.5;float frequency=1.0;int octaves=3;
+            for(int i=0;i<octaves;i++){
+                value+=amplitude*snoise(p*frequency+time*0.2*frequency);
+                amplitude*=0.5;frequency*=2.0;
+            }
+            return value;
+        }`;
+
+        const nodeShader = {
+            vertexShader: `${noiseFunctions}
+            attribute float nodeSize;attribute float nodeType;attribute vec3 nodeColor;attribute vec3 connectionIndices;attribute float distanceFromRoot;
+            uniform float uTime;uniform vec3 uPulsePositions[3];uniform float uPulseTimes[3];uniform float uPulseSpeed;uniform float uBaseNodeSize;
+            varying vec3 vColor;varying float vNodeType;varying vec3 vPosition;varying float vPulseIntensity;varying float vDistanceFromRoot;
+
+            float getPulseIntensity(vec3 worldPos, vec3 pulsePos, float pulseTime) {
+                if (pulseTime < 0.0) return 0.0;
+                float timeSinceClick = uTime - pulseTime;
+                if (timeSinceClick < 0.0 || timeSinceClick > 3.0) return 0.0;
+
+                float pulseRadius = timeSinceClick * uPulseSpeed;
+                float distToClick = distance(worldPos, pulsePos);
+                float pulseThickness = 2.0;
+                float waveProximity = abs(distToClick - pulseRadius);
+
+                return smoothstep(pulseThickness, 0.0, waveProximity) * smoothstep(3.0, 0.0, timeSinceClick);
+            }
+
+            void main() {
+                vNodeType = nodeType;
+                vColor = nodeColor;
+                vDistanceFromRoot = distanceFromRoot;
+
+                vec3 worldPos = (modelMatrix * vec4(position, 1.0)).xyz;
+                vPosition = worldPos;
+
+                float totalPulseIntensity = 0.0;
+                for (int i = 0; i < 3; i++) {
+                    totalPulseIntensity += getPulseIntensity(worldPos, uPulsePositions[i], uPulseTimes[i]);
+                }
+                vPulseIntensity = min(totalPulseIntensity, 1.0);
+
+                float timeScale = 0.5 + 0.5 * sin(uTime * 0.8 + distanceFromRoot * 0.2);
+                float baseSize = nodeSize * (0.8 + 0.2 * timeScale);
+                float pulseSize = baseSize * (1.0 + vPulseIntensity * 2.0);
+
+                vec3 modifiedPosition = position;
+                if (nodeType > 0.5) {
+                    float noise = fbm(position * 0.1, uTime * 0.1);
+                    modifiedPosition += normal * noise * 0.2;
+                }
+
+                vec4 mvPosition = modelViewMatrix * vec4(modifiedPosition, 1.0);
+                gl_PointSize = pulseSize * uBaseNodeSize * (800.0 / -mvPosition.z);
+                gl_Position = projectionMatrix * mvPosition;
+            }`,
+
+            fragmentShader: `
+            uniform float uTime;uniform vec3 uPulseColors[3];uniform int uActivePalette;
+            varying vec3 vColor;varying float vNodeType;varying vec3 vPosition;varying float vPulseIntensity;varying float vDistanceFromRoot;
+
+            void main() {
+                vec2 center = 2.0 * gl_PointCoord - 1.0;
+                float dist = length(center);
+                if (dist > 1.0) discard;
+
+                float glowStrength = 1.0 - smoothstep(0.0, 1.0, dist);
+                glowStrength = pow(glowStrength, 1.4);
+
+                vec3 baseColor = vColor * (0.8 + 0.2 * sin(uTime * 0.5 + vDistanceFromRoot * 0.3));
+                vec3 finalColor = baseColor;
+
+                if (vPulseIntensity > 0.0) {
+                    vec3 pulseColor = mix(vec3(1.0), uPulseColors[0], 0.3);
+                    finalColor = mix(baseColor, pulseColor, vPulseIntensity);
+                    finalColor *= (1.0 + vPulseIntensity * 0.7);
+                }
+
+                float alpha = glowStrength * (0.9 - 0.5 * dist);
+
+                float camDistance = length(vPosition - cameraPosition);
+                float distanceFade = smoothstep(80.0, 10.0, camDistance);
+
+                if (vNodeType > 0.5) {
+                    alpha *= 0.85;
+                } else {
+                    finalColor *= 1.2;
+                }
+
+                gl_FragColor = vec4(finalColor, alpha * distanceFade * 0.7);
+            }`
+        };
+
+        const connectionShader = {
+            vertexShader: `${noiseFunctions}
+            attribute vec3 startPoint;attribute vec3 endPoint;attribute float connectionStrength;attribute float pathIndex;attribute vec3 connectionColor;
+            uniform float uTime;uniform vec3 uPulsePositions[3];uniform float uPulseTimes[3];uniform float uPulseSpeed;
+            varying vec3 vColor;varying float vConnectionStrength;varying float vPulseIntensity;varying float vPathPosition;
+
+            float getPulseIntensity(vec3 worldPos, vec3 pulsePos, float pulseTime) {
+                if (pulseTime < 0.0) return 0.0;
+                float timeSinceClick = uTime - pulseTime;
+                if (timeSinceClick < 0.0 || timeSinceClick > 3.0) return 0.0;
+                float pulseRadius = timeSinceClick * uPulseSpeed;
+                float distToClick = distance(worldPos, pulsePos);
+                float pulseThickness = 2.0;
+                float waveProximity = abs(distToClick - pulseRadius);
+                return smoothstep(pulseThickness, 0.0, waveProximity) * smoothstep(3.0, 0.0, timeSinceClick);
+            }
+
+            void main() {
+                float t = position.x;
+                vPathPosition = t;
+
+                vec3 midPoint = mix(startPoint, endPoint, 0.5);
+                float pathOffset = sin(t * 3.14159) * 0.1;
+                vec3 perpendicular = normalize(cross(normalize(endPoint - startPoint), vec3(0.0, 1.0, 0.0)));
+                if (length(perpendicular) < 0.1) perpendicular = vec3(1.0, 0.0, 0.0);
+                midPoint += perpendicular * pathOffset;
+
+                vec3 p0 = mix(startPoint, midPoint, t);
+                vec3 p1 = mix(midPoint, endPoint, t);
+                vec3 finalPos = mix(p0, p1, t);
+
+                float noiseTime = uTime * 0.2;
+                float noise = fbm(vec3(pathIndex * 0.1, t * 0.5, noiseTime), noiseTime);
+                finalPos += perpendicular * noise * 0.1;
+
+                vec3 worldPos = (modelMatrix * vec4(finalPos, 1.0)).xyz;
+
+                float totalPulseIntensity = 0.0;
+                for (int i = 0; i < 3; i++) {
+                    totalPulseIntensity += getPulseIntensity(worldPos, uPulsePositions[i], uPulseTimes[i]);
+                }
+                vPulseIntensity = min(totalPulseIntensity, 1.0);
+
+                vColor = connectionColor;
+                vConnectionStrength = connectionStrength;
+
+                gl_Position = projectionMatrix * modelViewMatrix * vec4(finalPos, 1.0);
+            }`,
+
+            fragmentShader: `
+            uniform float uTime;uniform vec3 uPulseColors[3];
+            varying vec3 vColor;varying float vConnectionStrength;varying float vPulseIntensity;varying float vPathPosition;
+
+            void main() {
+                vec3 baseColor = vColor * (0.7 + 0.3 * sin(uTime * 0.5 + vPathPosition * 10.0));
+
+                float flowPattern = sin(vPathPosition * 20.0 - uTime * 3.0) * 0.5 + 0.5;
+                float flowIntensity = 0.3 * flowPattern * vConnectionStrength;
+
+                vec3 finalColor = baseColor;
+
+                if (vPulseIntensity > 0.0) {
+                    vec3 pulseColor = mix(vec3(1.0), uPulseColors[0], 0.3);
+                    finalColor = mix(baseColor, pulseColor, vPulseIntensity);
+                    flowIntensity += vPulseIntensity * 0.5;
+                }
+
+                finalColor *= (0.6 + flowIntensity + vConnectionStrength * 0.4);
+
+                float alpha = 0.8 * vConnectionStrength + 0.2 * flowPattern;
+                alpha = mix(alpha, min(1.0, alpha * 2.0), vPulseIntensity);
+
+                gl_FragColor = vec4(finalColor, alpha * 0.7);
+            }`
+        };
+
+        class Node {
+            constructor(position, level = 0, type = 0) {
+                this.position = position;
+                this.connections = [];
+                this.level = level;
+                this.type = type;
+                this.size = type === 0 ? THREE.MathUtils.randFloat(0.7, 1.2) : THREE.MathUtils.randFloat(0.4, 0.9);
+                this.distanceFromRoot = 0;
+            }
+
+            addConnection(node, strength = 1.0) {
+                if (!this.isConnectedTo(node)) {
+                    this.connections.push({ node, strength });
+                    node.connections.push({ node: this, strength });
+                }
+            }
+
+            isConnectedTo(node) {
+                return this.connections.some(conn => conn.node === node);
+            }
+        }
+
+        function generateNeuralNetwork() {
+            let nodes = [];
+            let rootNode;
+
+            function generateNeuralVortex() {
+                rootNode = new Node(new THREE.Vector3(0, 0, 0), 0, 0); rootNode.size = 1.8; nodes.push(rootNode);
+                const numSpirals = 6;
+                const totalHeight = 30;
+                const maxRadius = 16;
+                const nodesPerSpiral = 30;
+                const spiralNodes = [];
+
+                for (let s = 0; s < numSpirals; s++) {
+                    const spiralPhase = (s / numSpirals) * Math.PI * 2;
+                    const spiralArray = [];
+                    for (let i = 0; i < nodesPerSpiral; i++) {
+                        const t = i / (nodesPerSpiral - 1);
+
+                        const heightCurve = 1 - Math.pow(2 * t - 1, 2);
+                        const height = (t - 0.5) * totalHeight;
+                        const radiusCurve = Math.sin(t * Math.PI);
+                        const radius = maxRadius * radiusCurve;
+
+                        const revolutions = 2.5;
+                        const angle = spiralPhase + t * Math.PI * 2 * revolutions;
+
+                        const pos = new THREE.Vector3(radius * Math.cos(angle), height, radius * Math.sin(angle));
+                        pos.add(new THREE.Vector3(
+                            THREE.MathUtils.randFloatSpread(1.5),
+                            THREE.MathUtils.randFloatSpread(1.5),
+                            THREE.MathUtils.randFloatSpread(1.5)
+                        ));
+
+                        const level = Math.floor(t * 5) + 1;
+                        const isLeaf = Math.random() < 0.3 || i > nodesPerSpiral - 3;
+                        const newNode = new Node(pos, level, isLeaf ? 1 : 0);
+                        newNode.distanceFromRoot = Math.sqrt(radius * radius + height * height);
+                        newNode.spiralIndex = s;
+                        newNode.spiralPosition = t;
+                        nodes.push(newNode);
+                        spiralArray.push(newNode);
+                    }
+                    spiralNodes.push(spiralArray);
+                }
+
+                for (const spiral of spiralNodes) {
+                    rootNode.addConnection(spiral[0], 1.0);
+                    for (let i = 0; i < spiral.length - 1; i++) {
+                        spiral[i].addConnection(spiral[i + 1], 0.9);
+                    }
+                }
+
+                for (let s = 0; s < numSpirals; s++) {
+                    const currentSpiral = spiralNodes[s];
+                    const nextSpiral = spiralNodes[(s + 1) % numSpirals];
+                    const connectionPoints = 5;
+                    for (let c = 0; c < connectionPoints; c++) {
+                        const t = c / (connectionPoints - 1);
+                        const idx1 = Math.floor(t * (currentSpiral.length - 1));
+                        const idx2 = Math.floor(t * (nextSpiral.length - 1));
+                        currentSpiral[idx1].addConnection(nextSpiral[idx2], 0.7);
+                    }
+                }
+
+                for (let s = 0; s < numSpirals; s++) {
+                    const currentSpiral = spiralNodes[s];
+                    const jumpSpiral = spiralNodes[(s + 2) % numSpirals];
+                    const connections = 3;
+                    for (let c = 0; c < connections; c++) {
+                        const t1 = (c + 0.5) / connections;
+                        const t2 = (c + 1.0) / connections;
+                        const idx1 = Math.floor(t1 * (currentSpiral.length - 1));
+                        const idx2 = Math.floor(t2 * (jumpSpiral.length - 1));
+                        const start = currentSpiral[idx1];
+                        const end = jumpSpiral[idx2];
+
+                        const midPoint = new THREE.Vector3().lerpVectors(start.position, end.position, 0.5).multiplyScalar(0.7);
+                        const bridgeNode = new Node(midPoint, Math.max(start.level, end.level), 0);
+                        bridgeNode.distanceFromRoot = rootNode.position.distanceTo(midPoint);
+                        nodes.push(bridgeNode);
+                        start.addConnection(bridgeNode, 0.6);
+                        bridgeNode.addConnection(end, 0.6);
+                    }
+                }
+
+                const ringLevels = 5;
+                for (let r = 0; r < ringLevels; r++) {
+                    const height = (r / (ringLevels - 1) - 0.5) * totalHeight * 0.7;
+                    const ringNodes = nodes.filter(n => n !== rootNode && Math.abs(n.position.y - height) < 2);
+                    ringNodes.sort((a, b) => Math.atan2(a.position.z, a.position.x) - Math.atan2(b.position.z, b.position.x));
+                    if (ringNodes.length > 3) {
+                        for (let i = 0; i < ringNodes.length; i++) {
+                            ringNodes[i].addConnection(ringNodes[(i + 1) % ringNodes.length], 0.5);
+                        }
+                    }
+                }
+
+                const radialConnections = 10;
+                const candidates = nodes.filter(n => n !== rootNode && n.position.length() > 5)
+                                        .sort(() => Math.random() - 0.5)
+                                        .slice(0, radialConnections);
+                for (const node of candidates) {
+                    const numSegments = 1 + Math.floor(Math.random() * 2);
+                    let prevNode = node;
+                    for (let i = 1; i <= numSegments; i++) {
+                        const t = i / (numSegments + 1);
+                        const segPos = node.position.clone().multiplyScalar(1 - t);
+                        segPos.add(new THREE.Vector3(
+                            THREE.MathUtils.randFloatSpread(2),
+                            THREE.MathUtils.randFloatSpread(2),
+                            THREE.MathUtils.randFloatSpread(2)
+                        ));
+                        const newNode = new Node(segPos, Math.floor(node.level * (1 - t)), 0);
+                        newNode.distanceFromRoot = rootNode.position.distanceTo(segPos);
+                        nodes.push(newNode);
+                        prevNode.addConnection(newNode, 0.7);
+                        prevNode = newNode;
+                    }
+                    prevNode.addConnection(rootNode, 0.8);
+                }
+            }
+
+            generateNeuralVortex();
+            return { nodes, rootNode };
+        }
+
+        let neuralNetwork = null, nodesMesh = null, connectionsMesh = null;
+
+        function createNetworkVisualization() {
+            console.log(`Creating neural network visualization`);
+            if (nodesMesh) {
+                scene.remove(nodesMesh);
+                nodesMesh.geometry.dispose();
+                nodesMesh.material.dispose();
+                nodesMesh = null;
+            }
+            if (connectionsMesh) {
+                scene.remove(connectionsMesh);
+                connectionsMesh.geometry.dispose();
+                connectionsMesh.material.dispose();
+                connectionsMesh = null;
+            }
+
+            neuralNetwork = generateNeuralNetwork();
+            if (!neuralNetwork || neuralNetwork.nodes.length === 0) {
+                console.error("Network generation failed or resulted in zero nodes.");
+                return;
+            }
+
+            const nodesGeometry = new THREE.BufferGeometry();
+            const nodePositions = [], nodeTypes = [], nodeSizes = [], nodeColors = [], connectionIndices = [], distancesFromRoot = [];
+
+            neuralNetwork.nodes.forEach((node, index) => {
+                nodePositions.push(node.position.x, node.position.y, node.position.z);
+                nodeTypes.push(node.type);
+                nodeSizes.push(node.size);
+                distancesFromRoot.push(node.distanceFromRoot);
+
+                const indices = node.connections.slice(0, 3).map(conn => neuralNetwork.nodes.indexOf(conn.node));
+                while (indices.length < 3) indices.push(-1);
+                connectionIndices.push(...indices);
+
+                const palette = colorPalettes[config.activePaletteIndex];
+                const colorIndex = Math.min(node.level, palette.length - 1);
+                const baseColor = palette[colorIndex % palette.length].clone();
+                baseColor.offsetHSL(
+                    THREE.MathUtils.randFloatSpread(0.05),
+                    THREE.MathUtils.randFloatSpread(0.1),
+                    THREE.MathUtils.randFloatSpread(0.1)
+                );
+                nodeColors.push(baseColor.r, baseColor.g, baseColor.b);
+            });
+
+            nodesGeometry.setAttribute('position', new THREE.Float32BufferAttribute(nodePositions, 3));
+            nodesGeometry.setAttribute('nodeType', new THREE.Float32BufferAttribute(nodeTypes, 1));
+            nodesGeometry.setAttribute('nodeSize', new THREE.Float32BufferAttribute(nodeSizes, 1));
+            nodesGeometry.setAttribute('nodeColor', new THREE.Float32BufferAttribute(nodeColors, 3));
+            nodesGeometry.setAttribute('connectionIndices', new THREE.Float32BufferAttribute(connectionIndices, 3));
+            nodesGeometry.setAttribute('distanceFromRoot', new THREE.Float32BufferAttribute(distancesFromRoot, 1));
+
+            const nodesMaterial = new THREE.ShaderMaterial({
+                uniforms: THREE.UniformsUtils.clone(pulseUniforms),
+                vertexShader: nodeShader.vertexShader,
+                fragmentShader: nodeShader.fragmentShader,
+                transparent: true,
+                depthWrite: false,
+                blending: THREE.AdditiveBlending
+            });
+
+            nodesMesh = new THREE.Points(nodesGeometry, nodesMaterial);
+            scene.add(nodesMesh);
+
+            const connectionsGeometry = new THREE.BufferGeometry();
+            const connectionColors = [], connectionStrengths = [], connectionPositions = [], startPoints = [], endPoints = [], pathIndices = [];
+            const processedConnections = new Set();
+            let pathIndex = 0;
+
+            neuralNetwork.nodes.forEach((node, nodeIndex) => {
+                node.connections.forEach(connection => {
+                    const connectedNode = connection.node;
+                    const connectedIndex = neuralNetwork.nodes.indexOf(connectedNode);
+                    if (connectedIndex === -1) return;
+
+                    const key = [Math.min(nodeIndex, connectedIndex), Math.max(nodeIndex, connectedIndex)].join('-');
+                    if (!processedConnections.has(key)) {
+                        processedConnections.add(key);
+
+                        const startPoint = node.position;
+                        const endPoint = connectedNode.position;
+                        const numSegments = 15;
+
+                        for (let i = 0; i < numSegments; i++) {
+                            const t = i / (numSegments - 1);
+                            connectionPositions.push(t, 0, 0);
+                            startPoints.push(startPoint.x, startPoint.y, startPoint.z);
+                            endPoints.push(endPoint.x, endPoint.y, endPoint.z);
+                            pathIndices.push(pathIndex);
+                            connectionStrengths.push(connection.strength);
+
+                            const palette = colorPalettes[config.activePaletteIndex];
+                            const avgLevel = Math.min(Math.floor((node.level + connectedNode.level) / 2), palette.length - 1);
+                            const baseColor = palette[avgLevel % palette.length].clone();
+                            baseColor.offsetHSL(
+                                THREE.MathUtils.randFloatSpread(0.05),
+                                THREE.MathUtils.randFloatSpread(0.1),
+                                THREE.MathUtils.randFloatSpread(0.1)
+                            );
+                            connectionColors.push(baseColor.r, baseColor.g, baseColor.b);
+                        }
+                        pathIndex++;
+                    }
+                });
+            });
+
+            connectionsGeometry.setAttribute('position', new THREE.Float32BufferAttribute(connectionPositions, 3));
+            connectionsGeometry.setAttribute('startPoint', new THREE.Float32BufferAttribute(startPoints, 3));
+            connectionsGeometry.setAttribute('endPoint', new THREE.Float32BufferAttribute(endPoints, 3));
+            connectionsGeometry.setAttribute('connectionStrength', new THREE.Float32BufferAttribute(connectionStrengths, 1));
+            connectionsGeometry.setAttribute('connectionColor', new THREE.Float32BufferAttribute(connectionColors, 3));
+            connectionsGeometry.setAttribute('pathIndex', new THREE.Float32BufferAttribute(pathIndices, 1));
+
+            const connectionsMaterial = new THREE.ShaderMaterial({
+                uniforms: THREE.UniformsUtils.clone(pulseUniforms),
+                vertexShader: connectionShader.vertexShader,
+                fragmentShader: connectionShader.fragmentShader,
+                transparent: true,
+                depthWrite: false,
+                blending: THREE.AdditiveBlending
+            });
+
+            connectionsMesh = new THREE.LineSegments(connectionsGeometry, connectionsMaterial);
+            scene.add(connectionsMesh);
+
+            const palette = colorPalettes[config.activePaletteIndex];
+            connectionsMaterial.uniforms.uPulseColors.value[0].copy(palette[0]);
+            connectionsMaterial.uniforms.uPulseColors.value[1].copy(palette[1]);
+            connectionsMaterial.uniforms.uPulseColors.value[2].copy(palette[2]);
+            nodesMaterial.uniforms.uPulseColors.value[0].copy(palette[0]);
+            nodesMaterial.uniforms.uPulseColors.value[1].copy(palette[1]);
+            nodesMaterial.uniforms.uPulseColors.value[2].copy(palette[2]);
+            nodesMaterial.uniforms.uActivePalette.value = config.activePaletteIndex;
+        }
+
+        const raycaster = new THREE.Raycaster();
+        const pointer = new THREE.Vector2();
+        const interactionPlane = new THREE.Plane(new THREE.Vector3(0, 0, 1), 0);
+        const interactionPoint = new THREE.Vector3();
+        let lastPulseIndex = 0;
+        let isDragging = false;
+        let dragStartX = 0;
+        let dragStartY = 0;
+
+        function triggerPulse(clientX, clientY) {
+            pointer.x = (clientX / window.innerWidth) * 2 - 1;
+            pointer.y = -(clientY / window.innerHeight) * 2 + 1;
+
+            raycaster.setFromCamera(pointer, camera);
+
+            interactionPlane.normal.copy(camera.position).normalize();
+            interactionPlane.constant = -interactionPlane.normal.dot(camera.position) + camera.position.length() * 0.5;
+
+            if (raycaster.ray.intersectPlane(interactionPlane, interactionPoint)) {
+                const time = clock.getElapsedTime();
+
+                if (nodesMesh && connectionsMesh) {
+                    lastPulseIndex = (lastPulseIndex + 1) % 3;
+
+                    nodesMesh.material.uniforms.uPulsePositions.value[lastPulseIndex].copy(interactionPoint);
+                    nodesMesh.material.uniforms.uPulseTimes.value[lastPulseIndex] = time;
+                    connectionsMesh.material.uniforms.uPulsePositions.value[lastPulseIndex].copy(interactionPoint);
+                    connectionsMesh.material.uniforms.uPulseTimes.value[lastPulseIndex] = time;
+
+                    const palette = colorPalettes[config.activePaletteIndex];
+                    const randomColor = palette[Math.floor(Math.random() * palette.length)];
+                    nodesMesh.material.uniforms.uPulseColors.value[lastPulseIndex].copy(randomColor);
+                    connectionsMesh.material.uniforms.uPulseColors.value[lastPulseIndex].copy(randomColor);
+                }
+            }
+        }
+
+        // 修改为本地音乐文件
+        function initBackgroundMusic() {
+            const musicControl = document.getElementById('music-control');
+            let audio = null;
+            let isPlaying = false;
+
+            // 创建音频对象 - 使用本地文件
+            function createAudio() {
+                if (audio) return audio;
+
+                audio = new Audio();
+                // 使用本地音乐文件，假设文件名为background-music.mp3
+                // 注意：在实际使用时，请确保将音乐文件放在与HTML文件相同的目录下
+                audio.src = 'background-music.mp3'; // 改为本地文件
+                audio.loop = true;
+                audio.volume = 0.3; // 降低音量
+                audio.preload = 'auto';
+
+                return audio;
+            }
+
+            // 播放音乐
+            function playMusic() {
+                if (!audio) {
+                    audio = createAudio();
+                }
+
+                audio.play().then(() => {
+                    isPlaying = true;
+                    musicControl.classList.remove('paused');
+                    console.log('音乐播放成功');
+                }).catch(error => {
+                    console.log('音乐播放失败:', error);
+                    // 如果自动播放失败，等待用户交互
+                    const playOnInteraction = () => {
+                        audio.play().then(() => {
+                            isPlaying = true;
+                            musicControl.classList.remove('paused');
+                        });
+                        document.removeEventListener('click', playOnInteraction);
+                        document.removeEventListener('touchstart', playOnInteraction);
+                    };
+                    document.addEventListener('click', playOnInteraction);
+                    document.addEventListener('touchstart', playOnInteraction);
+                });
+            }
+
+            // 暂停音乐
+            function pauseMusic() {
+                if (audio) {
+                    audio.pause();
+                    isPlaying = false;
+                    musicControl.classList.add('paused');
+                }
+            }
+
+            // 初始化音乐 - 尝试自动播放（延迟更长，确保页面加载完成）
+            setTimeout(() => {
+                playMusic();
+            }, 2000);
+
+            // 音乐控制按钮点击事件
+            musicControl.addEventListener('click', (e) => {
+                e.stopPropagation();
+
+                if (!audio) {
+                    audio = createAudio();
+                }
+
+                if (isPlaying) {
+                    pauseMusic();
+                } else {
+                    playMusic();
+                }
+            });
+
+            // 页面可见性变化时处理音乐
+            document.addEventListener('visibilitychange', () => {
+                if (document.hidden && isPlaying) {
+                    // 页面隐藏时暂停音乐
+                    pauseMusic();
+                } else if (!document.hidden && !isPlaying && audio) {
+                    // 页面重新显示时恢复播放
+                    playMusic();
+                }
+            });
+        }
+
+        // 交互区域事件处理
+        const interactionSection = document.getElementById('interaction-section');
+
+        // 鼠标按下事件 - 开始拖拽
+        interactionSection.addEventListener('mousedown', (e) => {
+            isDragging = true;
+            dragStartX = e.clientX;
+            dragStartY = e.clientY;
+
+            // 阻止默认行为，避免文本选中
+            e.preventDefault();
+
+            // 临时禁用自动旋转
+            controls.autoRotate = false;
+        });
+
+        // 鼠标移动事件 - 拖拽旋转
+        document.addEventListener('mousemove', (e) => {
+            if (!isDragging) return;
+
+            const deltaX = e.clientX - dragStartX;
+            const deltaY = e.clientY - dragStartY;
+
+            // 更新相机旋转
+            controls.autoRotate = false;
+            controls.rotateLeft(-deltaX * 0.01);
+            controls.rotateUp(-deltaY * 0.01);
+
+            // 更新起始位置
+            dragStartX = e.clientX;
+            dragStartY = e.clientY;
+        });
+
+        // 鼠标释放事件 - 结束拖拽
+        document.addEventListener('mouseup', () => {
+            if (isDragging) {
+                isDragging = false;
+                // 恢复自动旋转
+                setTimeout(() => {
+                    controls.autoRotate = true;
+                }, 100);
+            }
+        });
+
+        // 鼠标点击事件 - 触发脉冲
+        interactionSection.addEventListener('click', (e) => {
+            // 如果拖拽距离很小，才触发脉冲（避免拖拽结束后误触发）
+            const dragDistance = Math.sqrt(
+                Math.pow(e.clientX - dragStartX, 2) +
+                Math.pow(e.clientY - dragStartY, 2)
+            );
+
+            if (dragDistance < 10) { // 10像素内的移动算点击
+                triggerPulse(e.clientX, e.clientY);
+
+                // 添加视觉反馈
+                const pulseFeedback = document.createElement('div');
+                pulseFeedback.style.position = 'fixed';
+                pulseFeedback.style.left = e.clientX + 'px';
+                pulseFeedback.style.top = e.clientY + 'px';
+                pulseFeedback.style.width = '0';
+                pulseFeedback.style.height = '0';
+                pulseFeedback.style.borderRadius = '50%';
+                pulseFeedback.style.background = 'radial-gradient(circle, rgba(255,120,50,0.8) 0%, rgba(255,120,50,0) 70%)';
+                pulseFeedback.style.transform = 'translate(-50%, -50%)';
+                pulseFeedback.style.pointerEvents = 'none';
+                pulseFeedback.style.zIndex = '10';
+                document.body.appendChild(pulseFeedback);
+
+                // 动画
+                pulseFeedback.animate([
+                    { width: '0', height: '0', opacity: 1 },
+                    { width: '100px', height: '100px', opacity: 0 }
+                ], {
+                    duration: 800,
+                    easing: 'ease-out'
+                }).onfinish = () => {
+                    document.body.removeChild(pulseFeedback);
+                };
+            }
+        });
+
+        // 在画布上直接交互（边缘区域）
+        renderer.domElement.addEventListener('click', (e) => {
+            // 检查是否点击了内容区域
+            const contentElements = document.querySelectorAll('.project-card, .resume-section, .content-container, .music-control, .interaction-section');
+            let clickedContent = false;
+
+            contentElements.forEach(element => {
+                const rect = element.getBoundingClientRect();
+                if (e.clientX >= rect.left && e.clientX <= rect.right &&
+                    e.clientY >= rect.top && e.clientY <= rect.bottom) {
+                    clickedContent = true;
+                }
+            });
+
+            // 如果点击了内容区域，不触发脉冲
+            if (clickedContent) return;
+
+            triggerPulse(e.clientX, e.clientY);
+        });
+
+        const clock = new THREE.Clock();
+
+        function animate() {
+            requestAnimationFrame(animate);
+
+            const t = clock.getElapsedTime();
+
+            if (nodesMesh) {
+                nodesMesh.material.uniforms.uTime.value = t;
+                nodesMesh.rotation.y = Math.sin(t * 0.05) * 0.08;
+            }
+            if (connectionsMesh) {
+                connectionsMesh.material.uniforms.uTime.value = t;
+                connectionsMesh.rotation.y = Math.sin(t * 0.05) * 0.08;
+            }
+
+            starField.rotation.y += 0.0003;
+
+            controls.update();
+            composer.render();
+        }
+
+        // 项目详情面板功能 - 更新为4个项目
+        const projectData = {
+            1: {
+                title: "AIGC动画-进化文明",
+                description: "自主策划并主导制作了一部从宇宙起源演进至星际文明的宏大叙事AIGC动画短片。项目使用通义万相等AI工具，通过精心设计的文生图与图生视频提示词，驱动生成从宇宙大爆炸到星际殖民的28个关键场景，最终通过DaVinci Resolve完成全片剪辑与节奏把控，将138亿年的进化史诗浓缩为2分30秒的视听叙事。",
+                features: [
+                    "全AI生成：使用文生图、图生视频技术生成所有视觉素材",
+                    "史诗叙事：构建跨越138亿年的完整时间线叙事结构",
+                    "提示词工程：设计复杂的提示词序列控制AI生成内容",
+                    "风格统一：保持AI生成内容在视觉风格上的一致性",
+                    "后期合成：将AI素材剪辑成具有节奏感的完整短片"
+                ],
+                media: {
+                    type: "video", // 可以改为 "video" 或 "images"
+                    items: [
+                        // 如果是视频，只需一个项目
+                        { url: "media/project1/evolution.mp4", type: "video" }
+                    ]
+                }
+            },
+            2: {
+                title: "AE特效合成短片-怀旧游戏",
+                description: "结合动态图形与视觉特效制作的风格化动作短片，使用Adobe After Effects及其插件(Saber、Particular)模拟怀旧战斗游戏的视觉张力。项目通过打击感特效、高速转场和风格化调色，展现了从分镜设计到最终合成的全流程制作能力，实现了将创意概念转化为高质量视觉作品的完整工作流。",
+                features: [
+                    "游戏风格化：模拟经典8-bit/16-bit游戏的美术风格",
+                    "特效合成：使用Saber、Particular等插件制作能量特效",
+                    "动态设计：流畅的转场动画和文字动态效果",
+                    "色彩管理：高饱和度的霓虹色调营造科幻氛围",
+                    "节奏控制：精确的镜头切换和时间重映射技术",
+                    "应用时间重映射技术控制动画节奏与张力"
+                ],
+                media: {
+                    type: "video", // 可以改为 "video" 或 "images"
+                    items: [
+                        // 如果是视频，只需一个项目
+                        { url: "media/project2/evolution.mp4", type: "video" }
+
+                    ]
+                }
+            },
+            3: {
+                title: "智能交通检测系统",
+                description: "这个项目是基于YOLOv8深度学习模型开发的智能交通检测系统，集成了目标检测、多目标跟踪和车辆统计功能。系统采用Django作为后端框架，提供完整的用户认证、图片/视频上传、实时检测和数据分析功能。支持车辆类型分类、数量统计和检测历史记录，可应用于交通监控、流量分析和智能城市管理等场景。",
+                features: [
+                    "基于YOLOv8的深度学习模型训练与部署",
+                    "多目标车辆跟踪与统计，避免重复计数",
+                    "支持图片和视频文件的检测处理",
+                    "完整的用户认证与权限管理系统",
+                    "车辆类型分类统计与可视化报表",
+                    "MySQL数据库存储检测历史与用户数据",
+                    "RESTful API设计，支持前后端分离架构"
+                ],
+                media: {
+                    type: "images", // 可以改为 "video" 或 "images"
+                    items: [
+                        // 如果是视频，只需一个项目
+                        // { url: "media/project3/detection_video.mp4", type: "video" }
+                        // 如果是图片，可以添加多个
+                        { url: "media/project3/detection1.png", type: "image" },
+                        { url: "media/project3/detection2.png", type: "image" },
+                        { url: "media/project3/detection3.png", type: "image" },
+                        { url: "media/project3/detection4.png", type: "image" },
+                        { url: "media/project3/detection5.png", type: "image" },
+                        { url: "media/project3/detection6.png", type: "image" },
+                        { url: "media/project3/detection7.png", type: "image" },
+                        { url: "media/project3/detection8.png", type: "image" }
+                    ]
+                }
+            },
+            4: {
+                title: "Unity追逃游戏",
+                description: "这款Unity追逃游戏是一款3D单人动作游戏，玩家扮演追逐者在精心设计的单一关卡中追捕由AI控制的逃跑者。游戏采用Unity的NavMesh系统实现智能寻路，逃跑者会根据玩家的位置动态调整逃跑路线。游戏专注于核心玩法的打磨，通过精心设计的关卡布局和AI行为模式，提供紧张刺激的追逃体验。",
+                features: [
+                    "Unity3D引擎开发，支持PC平台发布",
+                    "AI智能寻路系统，逃跑者使用NavMesh动态寻路",
+                    "玩家能扮演追逐者，通过第三人称视角控制角色",
+                    "精心设计的单一关卡，专注于核心游戏体验",
+                    "动画系统，角色拥有流畅的跑动、跳跃和攻击动画",
+                    "UI系统，显示游戏时间和攻击冷却"
+                ],
+                media: {
+                    type: "video", // 可以改为 "video" 或 "images"
+                    items: [
+
+                        { url: "media/project4/chase_game_video.mp4", type: "video" }
+
+                       ]
+                }
+            }
+        };
+
+        function initProjectDetails() {
+            // 项目卡片点击事件 - 点击卡片任何地方都打开详情
+            document.querySelectorAll('.project-card').forEach(card => {
+                card.addEventListener('click', (e) => {
+                    // 如果点击的是"查看详情"按钮，则阻止事件冒泡（由卡片处理）
+                    if (!e.target.closest('.view-details')) {
+                        const projectId = card.getAttribute('data-project');
+                        openProjectDetail(projectId);
+                    }
+                });
+            });
+
+            // 关闭面板事件
+            document.getElementById('close-panel').addEventListener('click', closeProjectDetail);
+            document.getElementById('panel-overlay').addEventListener('click', closeProjectDetail);
+
+            // 键盘事件
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') {
+                    closeProjectDetail();
+                }
+            });
+        }
+
+        function openProjectDetail(projectId) {
+            const project = projectData[projectId];
+            if (!project) return;
+
+            // 更新面板内容
+            document.getElementById('panel-title').textContent = project.title;
+
+            const panelContent = document.getElementById('panel-content');
+
+            // 创建媒体展示区（支持视频或图片轮播）
+let mediaHtml = '<div class="detail-media">';
+
+if (project.media.type === 'video') {
+    // 单个视频
+    mediaHtml += `
+        <video id="project-video" controls autoplay muted loop style="width:100%; height:100%; object-fit:contain;">
+            <source src="${project.media.items[0].url}" type="video/mp4">
+            您的浏览器不支持视频标签。
+        </video>
+    `;
+} else if (project.media.type === 'images' && project.media.items.length > 0) {
+    // 多个图片 - 轮播图
+    mediaHtml += `
+        <div class="media-carousel">
+            <div class="carousel-images">
+                ${project.media.items.map((item, index) => `
+                    <div class="carousel-item ${index === 0 ? 'active' : ''}" data-index="${index}">
+                        <img src="${item.url}" alt="${project.title} - ${index + 1}" loading="lazy">
+                    </div>
+                `).join('')}
+            </div>
+
+            ${project.media.items.length > 1 ? `
+                <div class="carousel-controls">
+                    <button class="carousel-prev"><i class="fas fa-chevron-left"></i></button>
+                    <button class="carousel-next"><i class="fas fa-chevron-right"></i></button>
+                </div>
+                <div class="carousel-indicators">
+                    ${project.media.items.map((_, index) => `
+                        <button class="carousel-indicator ${index === 0 ? 'active' : ''}" data-index="${index}"></button>
+                    `).join('')}
+                </div>
+            ` : ''}
+        </div>
+    `;
+} else {
+    // 备用：无媒体文件时
+    mediaHtml += `
+        <div style="width:100%; height:100%; display:flex; align-items:center; justify-content:center; background:linear-gradient(135deg, rgba(255,120,50,0.1), rgba(255,179,71,0.1)); border-radius:15px;">
+            <div style="text-align:center; color:#ff7832;">
+                <i class="fas fa-image" style="font-size:3rem; margin-bottom:10px;"></i>
+                <p>暂无媒体文件</p>
+            </div>
+        </div>
+    `;
+}
+
+mediaHtml += '</div>';
+
+            panelContent.innerHTML = `
+                ${mediaHtml}
+                <p class="detail-description">${project.description}</p>
+                <h3 style="color:#ff7832; margin-bottom:15px;">主要功能</h3>
+                <ul class="detail-features">
+                    ${project.features.map(feature => `<li><i class="fas fa-check"></i> ${feature}</li>`).join('')}
+                </ul>
+            `;
+
+            // 如果使用了轮播图，初始化轮播功能
+            if (project.media.type === 'images' && project.media.items.length > 1) {
+                initCarousel();
+            }
+
+            // 显示面板和遮罩
+            document.getElementById('detail-panel').classList.add('active');
+            document.getElementById('panel-overlay').classList.add('active');
+
+            // 禁用页面滚动
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeProjectDetail() {
+            document.getElementById('detail-panel').classList.remove('active');
+            document.getElementById('panel-overlay').classList.remove('active');
+            document.body.style.overflow = 'auto';
+        }
+
+        // 技能条动画
+        function initSkillBars() {
+            const skillBars = document.querySelectorAll('.skill-progress');
+
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        const skillBar = entry.target;
+                        const width = skillBar.getAttribute('data-width');
+                        skillBar.style.width = width + '%';
+                    }
+                });
+            }, { threshold: 0.5 });
+
+            skillBars.forEach(bar => {
+                observer.observe(bar);
+            });
+        }
+
+        // 轮播图功能
+        function initCarousel() {
+            const carouselImages = document.querySelector('.carousel-images');
+            const items = document.querySelectorAll('.carousel-item');
+            const indicators = document.querySelectorAll('.carousel-indicator');
+            const prevBtn = document.querySelector('.carousel-prev');
+            const nextBtn = document.querySelector('.carousel-next');
+
+            let currentIndex = 0;
+
+            function updateCarousel() {
+                carouselImages.style.transform = `translateX(-${currentIndex * 100}%)`;
+                items.forEach(item => item.classList.remove('active'));
+                items[currentIndex].classList.add('active');
+
+                indicators.forEach((indicator, index) => {
+                    indicator.classList.toggle('active', index === currentIndex);
+                });
+            }
+
+            if (prevBtn) {
+                prevBtn.addEventListener('click', () => {
+                    currentIndex = (currentIndex - 1 + items.length) % items.length;
+                    updateCarousel();
+                });
+            }
+
+            if (nextBtn) {
+                nextBtn.addEventListener('click', () => {
+                    currentIndex = (currentIndex + 1) % items.length;
+                    updateCarousel();
+                });
+            }
+
+            indicators.forEach((indicator, index) => {
+                indicator.addEventListener('click', () => {
+                    currentIndex = index;
+                    updateCarousel();
+                });
+            });
+
+            // 自动轮播（可选）
+            let autoplayInterval;
+            function startAutoplay() {
+                autoplayInterval = setInterval(() => {
+                    currentIndex = (currentIndex + 1) % items.length;
+                    updateCarousel();
+                }, 4000); // 4秒切换一次
+            }
+
+            // 鼠标悬停时停止自动轮播
+            const carouselContainer = document.querySelector('.media-carousel');
+            if (carouselContainer) {
+                carouselContainer.addEventListener('mouseenter', () => {
+                    clearInterval(autoplayInterval);
+                });
+
+                carouselContainer.addEventListener('mouseleave', () => {
+                    startAutoplay();
+                });
+            }
+
+            // 开始自动轮播
+            startAutoplay();
+        }
+
+        // 全屏功能
+        function toggleFullscreen(element) {
+    if (!element) return;
+
+    if (!document.fullscreenElement) {
+        if (element.requestFullscreen) {
+            element.requestFullscreen();
+        } else if (element.webkitRequestFullscreen) { /* Safari */
+            element.webkitRequestFullscreen();
+        } else if (element.msRequestFullscreen) { /* IE11 */
+            element.msRequestFullscreen();
+        }
+    } else {
+        if (document.exitFullscreen) {
+            document.exitFullscreen();
+        } else if (document.webkitExitFullscreen) { /* Safari */
+            document.webkitExitFullscreen();
+        } else if (document.msExitFullscreen) { /* IE11 */
+            document.msExitFullscreen();
+        }
+    }
+}
+
+        // 监听全屏变化
+        document.addEventListener('fullscreenchange', handleFullscreenChange);
+        document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+        document.addEventListener('msfullscreenchange', handleFullscreenChange);
+
+        function handleFullscreenChange() {
+            const fullscreenBtn = document.querySelector('.fullscreen-btn i');
+            if (fullscreenBtn) {
+                if (document.fullscreenElement) {
+                    fullscreenBtn.classList.remove('fa-expand');
+                    fullscreenBtn.classList.add('fa-compress');
+                } else {
+                    fullscreenBtn.classList.remove('fa-compress');
+                    fullscreenBtn.classList.add('fa-expand');
+                }
+            }
+        }
+
+        function init() {
+            createNetworkVisualization();
+            animate();
+
+            // 初始化背景音乐
+            initBackgroundMusic();
+
+            // 初始化项目详情功能
+            initProjectDetails();
+
+            // 初始化技能条动画
+            initSkillBars();
+
+            // 为内容添加动画
+            setTimeout(() => {
+                document.querySelectorAll('.animate-in').forEach((el, index) => {
+                    setTimeout(() => {
+                        el.classList.add('animate-in');
+                    }, index * 100);
+                });
+            }, 500);
+        }
+
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            composer.setSize(window.innerWidth, window.innerHeight);
+
+            bloomPass.resolution.set(window.innerWidth, window.innerHeight);
+        }
+        window.addEventListener('resize', onWindowResize);
+
+        init();
+    </script>
+</body>
+</html>
