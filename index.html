@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
     <title>交互式个人简历与作品集-李璞</title>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -18,15 +18,25 @@
             font-family: 'Inter', sans-serif;
         }
 
-        canvas {
-            display: block;
-            width: 100%;
-            height: 100%;
-            cursor: pointer;
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            overflow-x: hidden;
+            background: #000;
+            color: #eee;
+        }
+
+        /* 画布容器 */
+        #canvas-container {
             position: fixed;
             top: 0;
             left: 0;
+            width: 100%;
+            height: 100%;
             z-index: 1;
+            pointer-events: auto;
         }
 
         /* 音乐控制按钮 */
@@ -77,32 +87,28 @@
         .content-container {
             position: relative;
             z-index: 5;
-            padding: 20px;
-            max-width: 1400px;
+            padding: 40px 20px;
+            max-width: 1200px;
             margin: 0 auto;
             display: flex;
             flex-direction: column;
-            gap: 30px; /* 减少间距 */
+            gap: 50px;
         }
 
-        /* 个人简历区域 - 融入背景的修改 */
+        /* 其余CSS样式保持不变... */
+        /* 这里是之前所有的CSS样式，保持不变 */
+        /* 个人简历区域 - 单列布局 */
         .resume-section {
-            background: rgba(0, 0, 0, 0.3); /* 降低不透明度 */
-            backdrop-filter: blur(15px) brightness(0.8); /* 增强模糊效果和降低亮度 */
-            border-radius: 20px;
-            padding: 40px;
-            border: 1px solid rgba(255, 120, 50, 0.15); /* 更淡的边框 */
-            box-shadow:
-                0 8px 32px rgba(0, 0, 0, 0.1), /* 更柔和的阴影 */
-                inset 0 1px 0 rgba(255, 255, 255, 0.05); /* 添加内发光增加层次感 */
-            display: grid;
-            grid-template-columns: 1fr 2fr;
-            gap: 40px;
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(15px);
+            border-radius: 25px;
+            padding: 60px;
+            border: 1px solid rgba(255, 120, 50, 0.2);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
             position: relative;
             overflow: hidden;
         }
 
-        /* 添加半透明覆盖层增强融合效果 */
         .resume-section::before {
             content: '';
             position: absolute;
@@ -110,138 +116,235 @@
             left: 0;
             right: 0;
             bottom: 0;
-            background:
-                radial-gradient(circle at 20% 80%, rgba(255, 120, 50, 0.08) 0%, transparent 50%),
-                radial-gradient(circle at 80% 20%, rgba(255, 179, 71, 0.05) 0%, transparent 50%);
+            background: radial-gradient(circle at 20% 80%, rgba(255, 120, 50, 0.08) 0%, transparent 50%),
+                        radial-gradient(circle at 80% 20%, rgba(255, 179, 71, 0.05) 0%, transparent 50%);
             pointer-events: none;
             z-index: -1;
         }
 
-        .resume-left {
+        /* 简历头部区域 */
+        .resume-header {
             display: flex;
             flex-direction: column;
             align-items: center;
+            text-align: center;
+            margin-bottom: 50px;
         }
 
         .profile-image {
-            width: 200px;
-            height: 200px;
+            width: 280px;
+            height: 280px;
             border-radius: 50%;
             overflow: hidden;
-            margin-bottom: 25px;
-            border: 3px solid rgba(255, 120, 50, 0.5);
-            box-shadow: 0 0 20px rgba(255, 120, 50, 0.3);
+            margin-bottom: 30px;
+            border: 4px solid rgba(255, 120, 50, 0.6);
+            box-shadow: 0 10px 30px rgba(255, 120, 50, 0.3);
+            position: relative;
         }
 
         .profile-image img {
             width: 100%;
             height: 100%;
             object-fit: cover;
+            transition: transform 0.5s ease;
         }
 
+        .profile-image:hover img {
+            transform: scale(1.05);
+        }
+
+        .resume-header h1 {
+            font-size: 3.5rem;
+            color: rgba(255, 120, 50, 0.95);
+            margin-bottom: 10px;
+            text-shadow: 0 2px 10px rgba(255, 120, 50, 0.3);
+        }
+
+        .resume-header h2 {
+            font-size: 1.8rem;
+            color: rgba(255, 179, 71, 0.9);
+            margin-bottom: 20px;
+        }
+
+        .resume-header p {
+            font-size: 1.2rem;
+            color: rgba(221, 221, 221, 0.9);
+            line-height: 1.7;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        /* 联系方式区域 */
         .contact-info {
-            width: 100%;
-            margin-top: 20px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 25px;
+            margin-bottom: 50px;
+            background: rgba(255, 120, 50, 0.05);
+            padding: 30px;
+            border-radius: 15px;
+            border: 1px solid rgba(255, 120, 50, 0.1);
         }
 
         .contact-item {
             display: flex;
             align-items: center;
-            margin-bottom: 15px;
-            color: rgba(238, 238, 238, 0.85); /* 降低对比度 */
+            color: rgba(238, 238, 238, 0.9);
+            font-size: 1.1rem;
         }
 
         .contact-item i {
-            width: 30px;
+            width: 40px;
             color: #ff7832;
-            font-size: 1.2rem;
+            font-size: 1.3rem;
+            margin-right: 15px;
         }
 
+        /* 技能区域 */
         .skills-container {
-            margin-top: 30px;
-            width: 100%;
+            margin-bottom: 50px;
+        }
+
+        .skills-container h3 {
+            font-size: 2rem;
+            color: rgba(255, 120, 50, 0.9);
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .skills-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
         }
 
         .skill-item {
-            margin-bottom: 15px;
+            background: rgba(255, 255, 255, 0.03);
+            padding: 25px;
+            border-radius: 15px;
+            border: 1px solid rgba(255, 120, 50, 0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .skill-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(255, 120, 50, 0.1);
+            border-color: rgba(255, 120, 50, 0.3);
         }
 
         .skill-name {
             display: flex;
             justify-content: space-between;
-            margin-bottom: 5px;
-            color: rgba(238, 238, 238, 0.85); /* 降低对比度 */
+            margin-bottom: 15px;
+            color: rgba(238, 238, 238, 0.9);
+            font-size: 1.1rem;
         }
 
         .skill-bar {
-            height: 8px;
-            background: rgba(255, 255, 255, 0.05); /* 更透明的背景 */
-            border-radius: 4px;
+            height: 10px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 5px;
             overflow: hidden;
         }
 
         .skill-progress {
             height: 100%;
             background: linear-gradient(90deg, #ff7832, #ffb347);
-            border-radius: 4px;
+            border-radius: 5px;
             width: 0;
             transition: width 1.5s ease;
+            position: relative;
         }
 
-        .resume-right h1 {
-            font-size: 3.5rem;
-            color: rgba(255, 120, 50, 0.9); /* 稍微降低饱和度 */
-            margin-bottom: 10px;
+        .skill-progress::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(90deg,
+                transparent,
+                rgba(255, 255, 255, 0.3),
+                transparent);
+            animation: shimmer 2s infinite;
         }
 
-        .resume-right h2 {
-            font-size: 1.5rem;
-            color: rgba(255, 179, 71, 0.8); /* 降低饱和度 */
+        @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        /* 经历区域 */
+        .experience-section h3 {
+            font-size: 2rem;
+            color: rgba(255, 120, 50, 0.9);
             margin-bottom: 30px;
+            text-align: center;
         }
 
-        .resume-right p {
-            color: rgba(221, 221, 221, 0.85); /* 稍微透明 */
-            line-height: 1.6;
-            margin-bottom: 30px;
+        .experience-grid {
+            display: grid;
+            gap: 30px;
         }
 
         .experience-item {
-            margin-bottom: 30px;
-            padding-bottom: 20px;
-            border-bottom: 1px solid rgba(255, 120, 50, 0.2);
+            background: rgba(255, 255, 255, 0.03);
+            padding: 30px;
+            border-radius: 15px;
+            border: 1px solid rgba(255, 120, 50, 0.1);
+            transition: transform 0.3s ease;
+        }
+
+        .experience-item:hover {
+            transform: translateX(10px);
+            border-color: rgba(255, 120, 50, 0.3);
         }
 
         .experience-date {
-            color: rgba(255, 179, 71, 0.8); /* 降低饱和度 */
+            color: rgba(255, 179, 71, 0.9);
             font-weight: 600;
-            margin-bottom: 5px;
+            font-size: 1.1rem;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+        }
+
+        .experience-date::before {
+            content: '📅';
+            margin-right: 10px;
         }
 
         .experience-title {
-            font-size: 1.3rem;
-            color: rgba(238, 238, 238, 0.9); /* 降低对比度 */
-            margin-bottom: 10px;
+            font-size: 1.5rem;
+            color: rgba(238, 238, 238, 0.95);
+            margin-bottom: 15px;
         }
 
-        /* 中间交互区域 - 减小高度 */
+        .experience-item p {
+            color: rgba(221, 221, 221, 0.85);
+            line-height: 1.7;
+            font-size: 1.1rem;
+        }
+
+        /* 中间交互区域 */
         .interaction-section {
-            height: 30vh; /* 从50vh减小到30vh */
+            height: 40vh;
+            min-height: 300px;
             position: relative;
             z-index: 5;
             cursor: pointer;
+            margin: 20px 0;
         }
 
-        /* 项目展示区域 - 融入背景的修改 */
+        /* 项目展示区域 */
         .projects-section {
-            background: rgba(0, 0, 0, 0.25); /* 更透明的背景 */
-            backdrop-filter: blur(15px) brightness(0.8);
-            border-radius: 20px;
-            padding: 40px;
-            border: 1px solid rgba(255, 120, 50, 0.15); /* 更淡的边框 */
-            box-shadow:
-                0 8px 32px rgba(0, 0, 0, 0.1),
-                inset 0 1px 0 rgba(255, 255, 255, 0.05);
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(15px);
+            border-radius: 25px;
+            padding: 60px;
+            border: 1px solid rgba(255, 120, 50, 0.2);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
             position: relative;
             overflow: hidden;
         }
@@ -253,53 +356,55 @@
             left: 0;
             right: 0;
             bottom: 0;
-            background:
-                radial-gradient(circle at 30% 30%, rgba(255, 120, 50, 0.06) 0%, transparent 50%),
-                radial-gradient(circle at 70% 70%, rgba(255, 179, 71, 0.04) 0%, transparent 50%);
+            background: radial-gradient(circle at 30% 30%, rgba(255, 120, 50, 0.06) 0%, transparent 50%),
+                        radial-gradient(circle at 70% 70%, rgba(255, 179, 71, 0.04) 0%, transparent 50%);
             pointer-events: none;
             z-index: -1;
         }
 
         .section-header {
             text-align: center;
-            margin-bottom: 50px;
+            margin-bottom: 60px;
         }
 
         .section-title {
             font-size: 3rem;
-            color: rgba(255, 120, 50, 0.9); /* 降低饱和度 */
+            color: rgba(255, 120, 50, 0.95);
             margin-bottom: 15px;
+            text-shadow: 0 2px 10px rgba(255, 120, 50, 0.3);
         }
 
         .section-subtitle {
-            color: rgba(221, 221, 221, 0.85); /* 稍微透明 */
-            font-size: 1.2rem;
-            max-width: 600px;
+            color: rgba(221, 221, 221, 0.9);
+            font-size: 1.3rem;
+            max-width: 700px;
             margin: 0 auto;
+            line-height: 1.6;
         }
 
-        /* 翻转卡片样式 - 修改为每行两个项目 */
+        /* 项目卡片 - 单列布局 */
         .projects-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr); /* 每行两个项目 */
-            gap: 30px;
-            margin-bottom: 40px;
+            display: flex;
+            flex-direction: column;
+            gap: 50px;
+            margin-bottom: 50px;
         }
 
         .project-card {
-            height: 400px;
             perspective: 1000px;
             cursor: pointer;
+            min-height: 450px;
         }
 
         .card-inner {
             position: relative;
             width: 100%;
             height: 100%;
+            min-height: 450px;
             text-align: center;
             transition: transform 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             transform-style: preserve-3d;
-            border-radius: 20px;
+            border-radius: 25px;
         }
 
         .project-card:hover .card-inner {
@@ -312,8 +417,8 @@
             height: 100%;
             -webkit-backface-visibility: hidden;
             backface-visibility: hidden;
-            border-radius: 20px;
-            padding: 30px;
+            border-radius: 25px;
+            padding: 50px;
             display: flex;
             flex-direction: column;
             justify-content: center;
@@ -322,176 +427,174 @@
         }
 
         .card-front {
-            background: rgba(0, 0, 0, 0.4); /* 更透明的黑色背景 */
-            backdrop-filter: blur(12px) brightness(0.85);
-            border: 1px solid rgba(255, 120, 50, 0.1); /* 更淡的边框 */
-            box-shadow:
-                0 10px 25px rgba(0, 0, 0, 0.2),
-                inset 0 1px 0 rgba(255, 255, 255, 0.05);
-        }
-
-        /* 移除卡片前的旋转动画边框 */
-        .card-front::before {
-            content: '';
-            position: absolute;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
-            background: conic-gradient(transparent, rgba(255, 120, 50, 0.3), transparent 30%);
-            animation: rotate 4s linear infinite;
-            z-index: -1;
-            display: none; /* 移除彩色旋转边框 */
-        }
-
-        @keyframes rotate {
-            100% { transform: rotate(360deg); }
-        }
-
-        .card-front::after {
-            content: '';
-            position: absolute;
-            inset: 5px;
-            background: rgba(0, 0, 0, 0.4); /* 与card-front背景一致 */
-            border-radius: 16px;
-            z-index: -1;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 120, 50, 0.2);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
         }
 
         .card-back {
-            background: linear-gradient(135deg, rgba(255, 120, 50, 0.9), rgba(255, 179, 71, 0.9));
+            background: linear-gradient(135deg,
+                rgba(255, 120, 50, 0.95),
+                rgba(255, 179, 71, 0.95));
             color: white;
             transform: rotateY(180deg);
-            border: 1px solid rgba(255, 120, 50, 0.5);
+            border: 1px solid rgba(255, 120, 50, 0.6);
             justify-content: flex-start;
             align-items: flex-start;
             text-align: left;
-            padding: 30px;
+            padding: 50px;
             overflow-y: auto;
         }
 
         .project-number {
-            font-size: 3rem;
+            font-size: 5rem;
             font-weight: 800;
-            color: rgba(255, 120, 50, 0.07); /* 更淡的颜色 */
+            color: rgba(255, 120, 50, 0.1);
             position: absolute;
-            top: 10px;
-            right: 20px;
+            top: 20px;
+            right: 30px;
             line-height: 1;
         }
 
         .project-title {
-            font-size: 1.8rem;
-            color: rgba(255, 120, 50, 0.85); /* 降低饱和度 */
-            margin-bottom: 15px;
+            font-size: 2.2rem;
+            color: rgba(255, 120, 50, 0.95);
+            margin-bottom: 25px;
             text-align: left;
             width: 100%;
         }
 
         .card-back .project-title {
             color: white;
-            font-size: 1.6rem;
-            margin-bottom: 20px;
+            font-size: 2.5rem;
+            margin-bottom: 30px;
             text-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
         }
 
         .project-description {
-            color: rgba(221, 221, 221, 0.8); /* 稍微透明 */
-            line-height: 1.6;
-            margin-bottom: 20px;
-            flex-grow: 1;
+            color: rgba(221, 221, 221, 0.9);
+            line-height: 1.7;
+            margin-bottom: 30px;
             text-align: left;
             width: 100%;
+            font-size: 1.2rem;
         }
 
         .card-back .project-description {
-            color: rgba(255, 255, 255, 0.95);
-            font-size: 1rem;
-            line-height: 1.7;
-            margin-bottom: 25px;
+            color: rgba(255, 255, 255, 0.98);
+            font-size: 1.3rem;
+            line-height: 1.8;
+            margin-bottom: 35px;
         }
 
         .project-tech {
             display: flex;
             flex-wrap: wrap;
-            gap: 8px;
-            margin-bottom: 20px;
+            gap: 12px;
+            margin-bottom: 30px;
             width: 100%;
             justify-content: flex-start;
         }
 
         .tech-tag {
-            padding: 5px 12px;
-            background: rgba(255, 120, 50, 0.1); /* 更透明的背景 */
-            color: rgba(255, 179, 71, 0.8); /* 降低饱和度 */
-            border-radius: 20px;
-            font-size: 0.85rem;
+            padding: 8px 20px;
+            background: rgba(255, 120, 50, 0.15);
+            color: rgba(255, 179, 71, 0.9);
+            border-radius: 25px;
+            font-size: 1rem;
+            border: 1px solid rgba(255, 120, 50, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .tech-tag:hover {
+            background: rgba(255, 120, 50, 0.3);
+            transform: translateY(-2px);
         }
 
         .card-back .tech-tag {
-            background: rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.25);
             color: white;
-            border: 1px solid rgba(255, 255, 255, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.4);
         }
 
         .view-details {
-            display: flex;
+            display: inline-flex;
             align-items: center;
-            color: rgba(255, 120, 50, 0.9); /* 降低饱和度 */
+            color: rgba(255, 120, 50, 0.95);
             font-weight: 600;
-            transition: color 0.3s;
+            font-size: 1.1rem;
+            transition: all 0.3s;
             position: absolute;
-            bottom: 30px;
-            left: 30px;
+            bottom: 40px;
+            left: 50px;
+            padding: 12px 25px;
+            background: rgba(255, 120, 50, 0.1);
+            border-radius: 25px;
+            border: 1px solid rgba(255, 120, 50, 0.3);
+        }
+
+        .view-details:hover {
+            background: rgba(255, 120, 50, 0.2);
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(255, 120, 50, 0.2);
         }
 
         .view-details i {
-            margin-left: 8px;
+            margin-left: 10px;
             transition: transform 0.3s;
         }
 
+        .view-details:hover i {
+            transform: translateX(5px);
+        }
+
         .card-back .view-details {
+            position: static;
+            margin-top: 20px;
             color: white;
             border: 2px solid white;
-            padding: 8px 20px;
+            padding: 12px 30px;
             border-radius: 30px;
-            margin-top: 20px;
-            position: static;
+            background: transparent;
         }
 
         .project-features {
             list-style: none;
-            margin-bottom: 25px;
+            margin-bottom: 35px;
             width: 100%;
         }
 
         .project-features li {
-            padding: 8px 0;
-            color: rgba(255, 255, 255, 0.95);
+            padding: 12px 0;
+            color: rgba(255, 255, 255, 0.98);
             display: flex;
             align-items: center;
-            font-size: 0.95rem;
+            font-size: 1.1rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
         }
 
         .project-features li i {
             color: white;
-            margin-right: 10px;
-            font-size: 0.9rem;
+            margin-right: 15px;
+            font-size: 1.1rem;
+            min-width: 20px;
         }
 
-        /* 详情面板样式 - 简化版 */
+        /* 详情面板样式 */
         .detail-panel {
             position: fixed;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%) scale(0.9);
-            width: 90%;
-            max-width: 1000px;
+            width: 95vw;
+            max-width: 1400px;
             height: 90vh;
-            background: rgba(0, 0, 0, 0.95);
-            backdrop-filter: blur(20px);
-            border-radius: 20px;
-            border: 1px solid rgba(255, 120, 50, 0.5);
-            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.7);
+            background: rgba(0, 0, 0, 0.97);
+            backdrop-filter: blur(30px);
+            border-radius: 25px;
+            border: 2px solid rgba(255, 120, 50, 0.6);
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.8);
             z-index: 1000;
             opacity: 0;
             visibility: hidden;
@@ -508,27 +611,31 @@
         }
 
         .detail-header {
-            background: linear-gradient(90deg, rgba(255, 120, 50, 0.8), rgba(255, 179, 71, 0.8));
-            padding: 25px;
+            background: linear-gradient(90deg,
+                rgba(255, 120, 50, 0.9),
+                rgba(255, 179, 71, 0.9));
+            padding: 30px 40px;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            flex-shrink: 0;
         }
 
         .detail-title {
-            font-size: 2.2rem;
+            font-size: 2.5rem;
             color: white;
             font-weight: 700;
+            text-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
         }
 
         .close-panel {
-            width: 50px;
-            height: 50px;
+            width: 60px;
+            height: 60px;
             background: rgba(0, 0, 0, 0.3);
             border-radius: 50%;
-            border: none;
+            border: 2px solid white;
             color: white;
-            font-size: 1.5rem;
+            font-size: 1.8rem;
             cursor: pointer;
             transition: all 0.3s;
             display: flex;
@@ -542,80 +649,73 @@
         }
 
         .detail-content {
-            padding: 30px;
+            padding: 40px;
             overflow-y: auto;
             flex-grow: 1;
             display: flex;
             flex-direction: column;
+            gap: 40px;
         }
 
+        /* 媒体展示区域 */
         .detail-media {
             width: 100%;
-            height: 350px;
-            border-radius: 15px;
+            height: 500px;
+            min-height: 500px;
+            border-radius: 20px;
             margin-bottom: 30px;
             overflow: hidden;
             display: flex;
             align-items: center;
             justify-content: center;
-            background: linear-gradient(135deg, rgba(255, 120, 50, 0.1), rgba(255, 179, 71, 0.1));
+            background: linear-gradient(135deg,
+                rgba(255, 120, 50, 0.15),
+                rgba(255, 179, 71, 0.15));
+            border: 1px solid rgba(255, 120, 50, 0.3);
+            position: relative;
         }
 
         .detail-media img {
             width: 100%;
             height: 100%;
             object-fit: contain;
+            padding: 20px;
         }
 
         .detail-media video {
             width: 100%;
             height: 100%;
             object-fit: contain;
+            padding: 20px;
         }
 
         .detail-description {
             color: #ddd;
-            line-height: 1.6;
+            line-height: 1.8;
             margin-bottom: 30px;
-            font-size: 1.1rem;
+            font-size: 1.3rem;
             flex-grow: 1;
         }
 
         .detail-features {
             list-style: none;
-            margin-bottom: 30px;
+            margin-bottom: 40px;
         }
 
         .detail-features li {
-            padding: 10px 0;
+            padding: 15px 0;
             color: #ddd;
             display: flex;
             align-items: center;
+            font-size: 1.1rem;
+            border-bottom: 1px solid rgba(255, 120, 50, 0.2);
         }
 
         .detail-features li i {
             color: #ff7832;
-            margin-right: 10px;
-        }
-
-        /* 遮罩层 */
-        .panel-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.8);
-            backdrop-filter: blur(5px);
-            z-index: 999;
-            opacity: 0;
-            visibility: hidden;
-            transition: all 0.3s;
-        }
-
-        .panel-overlay.active {
-            opacity: 1;
-            visibility: visible;
+            margin-right: 15px;
+            font-size: 1.2rem;
+            min-width: 25px;
         }
 
         /* 轮播图样式 */
@@ -624,7 +724,7 @@
             width: 100%;
             height: 100%;
             overflow: hidden;
-            border-radius: 15px;
+            border-radius: 20px;
             background: rgba(0, 0, 0, 0.3);
         }
 
@@ -640,18 +740,23 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            padding: 20px;
         }
 
         .carousel-item img {
             width: 100%;
             height: 100%;
             object-fit: contain;
+            max-width: 100%;
+            max-height: 100%;
         }
 
         .carousel-item video {
             width: 100%;
             height: 100%;
             object-fit: contain;
+            max-width: 100%;
+            max-height: 100%;
         }
 
         .carousel-controls {
@@ -662,7 +767,7 @@
             display: flex;
             justify-content: space-between;
             transform: translateY(-50%);
-            padding: 0 15px;
+            padding: 0 25px;
             z-index: 10;
         }
 
@@ -671,39 +776,39 @@
             backdrop-filter: blur(10px);
             border: 2px solid rgba(255, 120, 50, 0.8);
             color: white;
-            width: 45px;
-            height: 45px;
+            width: 60px;
+            height: 60px;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
             cursor: pointer;
             transition: all 0.3s;
-            font-size: 1.2rem;
+            font-size: 1.5rem;
         }
 
         .carousel-prev:hover, .carousel-next:hover {
             background: rgba(255, 120, 50, 0.9);
-            transform: scale(1.1);
+            transform: scale(1.15);
         }
 
         .carousel-indicators {
             position: absolute;
-            bottom: 15px;
+            bottom: 25px;
             left: 0;
             right: 0;
             display: flex;
             justify-content: center;
-            gap: 8px;
+            gap: 12px;
             z-index: 10;
         }
 
         .carousel-indicator {
-            width: 10px;
-            height: 10px;
+            width: 15px;
+            height: 15px;
             border-radius: 50%;
             background: rgba(255, 255, 255, 0.3);
-            border: none;
+            border: 2px solid rgba(255, 255, 255, 0.5);
             cursor: pointer;
             transition: all 0.3s;
             padding: 0;
@@ -711,62 +816,152 @@
 
         .carousel-indicator.active {
             background: #ff7832;
-            transform: scale(1.3);
+            transform: scale(1.4);
+            border-color: #ff7832;
         }
+
+        /* 遮罩层 */
+        .panel-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(10px);
+            z-index: 999;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s;
+        }
+
+        .panel-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
         /* 响应式设计 */
-        @media (max-width: 1024px) {
-            .resume-section {
-                grid-template-columns: 1fr;
-                gap: 30px;
-            }
-
-            .projects-grid {
-                grid-template-columns: repeat(2, 1fr); /* 中等屏幕保持两列 */
-            }
-
-            .interaction-section {
-                height: 25vh;
-            }
-        }
-
-        @media (max-width: 768px) {
+        @media (max-width: 1200px) {
             .content-container {
-                padding: 15px;
-                gap: 20px;
+                max-width: 95%;
+                padding: 30px 15px;
             }
 
             .resume-section, .projects-section {
-                padding: 25px;
-                background: rgba(0, 0, 0, 0.25); /* 移动端保持相同透明度 */
+                padding: 40px;
             }
 
-            .resume-right h1 {
-                font-size: 2.5rem;
+            .profile-image {
+                width: 250px;
+                height: 250px;
+            }
+
+            .resume-header h1 {
+                font-size: 3rem;
             }
 
             .section-title {
                 font-size: 2.5rem;
             }
 
-            .projects-grid {
-                grid-template-columns: 1fr; /* 移动端改为单列 */
+            .project-card {
+                min-height: 400px;
             }
 
-            .interaction-section {
-                height: 20vh;
+            .card-front, .card-back {
+                padding: 40px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .content-container {
+                padding: 20px 10px;
+                gap: 30px;
+            }
+
+            .resume-section, .projects-section {
+                padding: 30px 20px;
+                border-radius: 20px;
+            }
+
+            .profile-image {
+                width: 200px;
+                height: 200px;
+            }
+
+            .resume-header h1 {
+                font-size: 2.5rem;
+            }
+
+            .resume-header h2 {
+                font-size: 1.5rem;
+            }
+
+            .contact-info {
+                grid-template-columns: 1fr;
+                padding: 20px;
+            }
+
+            .skills-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .section-title {
+                font-size: 2.2rem;
+            }
+
+            .section-subtitle {
+                font-size: 1.1rem;
+            }
+
+            .project-title {
+                font-size: 1.8rem;
+            }
+
+            .card-back .project-title {
+                font-size: 2rem;
+            }
+
+            .project-description {
+                font-size: 1.1rem;
+            }
+
+            .card-front, .card-back {
+                padding: 30px 20px;
+            }
+
+            .view-details {
+                position: static;
+                margin-top: 20px;
             }
 
             .detail-panel {
-                width: 95%;
+                width: 98vw;
                 height: 95vh;
             }
 
-            .detail-media {
-                height: 250px;
+            .detail-header {
+                padding: 20px;
             }
 
-            .project-card {
+            .detail-title {
+                font-size: 2rem;
+            }
+
+            .detail-content {
+                padding: 20px;
+                gap: 25px;
+            }
+
+            .detail-media {
                 height: 350px;
+                min-height: 350px;
+            }
+
+            .close-panel {
+                width: 50px;
+                height: 50px;
+                font-size: 1.5rem;
             }
 
             .music-control {
@@ -776,13 +971,57 @@
                 top: 15px;
                 right: 15px;
             }
+
+            .interaction-section {
+                height: 30vh;
+                min-height: 200px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .resume-header h1 {
+                font-size: 2.2rem;
+            }
+
+            .resume-header p {
+                font-size: 1.1rem;
+            }
+
+            .contact-item {
+                font-size: 1rem;
+            }
+
+            .skill-item {
+                padding: 20px;
+            }
+
+            .experience-item {
+                padding: 20px;
+            }
+
+            .project-number {
+                font-size: 4rem;
+                top: 15px;
+                right: 20px;
+            }
+
+            .detail-media {
+                height: 300px;
+                min-height: 300px;
+            }
+
+            .carousel-prev, .carousel-next {
+                width: 50px;
+                height: 50px;
+                font-size: 1.3rem;
+            }
         }
 
         /* 动画 */
         @keyframes fadeInUp {
             from {
                 opacity: 0;
-                transform: translateY(30px);
+                transform: translateY(40px);
             }
             to {
                 opacity: 1;
@@ -791,13 +1030,35 @@
         }
 
         .animate-in {
-            animation: fadeInUp 0.6s ease forwards;
+            animation: fadeInUp 0.8s ease forwards;
+            opacity: 0;
+        }
+
+        /* 滚动条样式 */
+        ::-webkit-scrollbar {
+            width: 10px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 5px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 120, 50, 0.5);
+            border-radius: 5px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 120, 50, 0.7);
         }
     </style>
 </head>
 <body>
-    <!-- Three.js画布 -->
-    <canvas id="neural-network-canvas"></canvas>
+    <!-- Three.js画布容器 -->
+    <div id="canvas-container">
+        <canvas id="neural-network-canvas"></canvas>
+    </div>
 
     <!-- 音乐控制按钮 -->
     <div class="music-control" id="music-control">
@@ -809,32 +1070,41 @@
     <div class="content-container">
         <!-- 个人简历区域 -->
         <section class="resume-section animate-in">
-            <div class="resume-left">
+            <!-- ... 简历内容保持不变 ... -->
+            <div class="resume-header">
                 <div class="profile-image">
-                    <img src="image/证件照.jpg" alt="个人头像">
+                    <img src="image/证件照.jpg" alt="李璞的个人头像">
                 </div>
 
-                <div class="contact-info">
-                    <div class="contact-item">
-                        <i class="fas fa-envelope"></i>
-                        <span>2646167967@qq.com</span>
-                    </div>
-                    <div class="contact-item">
-                        <i class="fas fa-phone"></i>
-                        <span>+86 1911-905-0985</span>
-                    </div>
-                    <div class="contact-item">
-                        <i class="fas fa-map-marker-alt"></i>
-                        <span>四川省达州市</span>
-                    </div>
-                    <div class="contact-item">
-                        <i class="fas fa-graduation-cap"></i>
-                        <span>成都理工大学 数字媒体技术专业</span>
-                    </div>
-                </div>
+                <h1>李璞</h1>
+                <h2>前端开发工程师 & UI/UX设计师</h2>
+                <p>
+                    数字媒体技术在读大学生，专注于Web前端开发和交互式数据可视化。热爱探索前沿技术，擅长将复杂数据转化为直观的可视化体验，致力于创造既美观又实用的数字产品。
+                </p>
+            </div>
 
-                <div class="skills-container">
-                    <h3 style="color:rgba(255, 120, 50, 0.85); margin-bottom:20px;">核心技能</h3>
+            <div class="contact-info">
+                <div class="contact-item">
+                    <i class="fas fa-envelope"></i>
+                    <span>2646167967@qq.com</span>
+                </div>
+                <div class="contact-item">
+                    <i class="fas fa-phone"></i>
+                    <span>+86 1911-905-0985</span>
+                </div>
+                <div class="contact-item">
+                    <i class="fas fa-map-marker-alt"></i>
+                    <span>四川省达州市</span>
+                </div>
+                <div class="contact-item">
+                    <i class="fas fa-graduation-cap"></i>
+                    <span>成都理工大学 数字媒体技术专业</span>
+                </div>
+            </div>
+
+            <div class="skills-container">
+                <h3>核心技能</h3>
+                <div class="skills-grid">
                     <div class="skill-item">
                         <div class="skill-name">
                             <span>JavaScript/TypeScript</span>
@@ -871,7 +1141,6 @@
                             <div class="skill-progress" data-width="80"></div>
                         </div>
                     </div>
-                    <!-- 只保留7个技能条，删除多余的技能条 -->
                     <div class="skill-item">
                         <div class="skill-name">
                             <span>Python</span>
@@ -892,51 +1161,44 @@
                     </div>
                     <div class="skill-item">
                         <div class="skill-name">
-                            <span>AE</span>
+                            <span>AE/PR</span>
                             <span>88%</span>
                         </div>
                         <div class="skill-bar">
                             <div class="skill-progress" data-width="88"></div>
                         </div>
                     </div>
-                    <!-- 删除了数据库设计、Docker、云服务(AWS/Azure)这三个技能条 -->
                 </div>
             </div>
 
-            <div class="resume-right">
-                <h1>李璞</h1>
-                <h2>前端开发工程师 & UI/UX设计师</h2>
+            <div class="experience-section">
+                <h3>校园经历</h3>
+                <div class="experience-grid">
+                    <div class="experience-item">
+                        <div class="experience-date">2022.9 - 2025.7</div>
+                        <div class="experience-title">学习委员</div>
+                        <p>担任师生间的固定联络人，负责课程通知、作业收发与学习信息的上传下达，响应同学需求组织复习交流活动，并管理班级共享学习资料库，保障了各项学业协助工作与学习事务的顺畅运行。</p>
+                    </div>
 
-                <p>
-                    数字媒体技术在读大学生，专注于Web前端开发和交互式数据可视化。热爱探索前沿技术，擅长将复杂数据转化为直观的可视化体验。
-                </p>
+                    <div class="experience-item">
+                        <div class="experience-date">2022.9 - 2022.12</div>
+                        <div class="experience-title">SYB创新创业培训</div>
+                        <p>系统完成了"创办你的企业"（SYB）全部课程，深入学习了市场分析、团队管理、成本核算及财务规划等商业知识，并独立完成了一份结构完整的商业计划书，具备了将创意转化为可行项目的基础能力。</p>
+                    </div>
 
-                <h3 style="color:rgba(255, 120, 50, 0.85); margin-bottom:20px;">校园经历</h3>
-
-                <div class="experience-item">
-                    <div class="experience-date">2022.9 - 2025.7</div>
-                    <div class="experience-title">学习委员</div>
-                    <p>担任师生间的固定联络人，负责课程通知、作业收发与学习信息的上传下达，响应同学需求组织复习交流活动，并管理班级共享学习资料库，保障了各项学业协助工作与学习事务的顺畅运行。</p>
-                </div>
-
-                <div class="experience-item">
-                    <div class="experience-date">2022.9 - 2022.12</div>
-                    <div class="experience-title">SYB创新创业培训</div>
-                    <p>系统完成了"创办你的企业"（SYB）全部课程，深入学习了市场分析、团队管理、成本核算及财务规划等商业知识，并独立完成了一份结构完整的商业计划书，具备了将创意转化为可行项目的基础能力。</p>
-                </div>
-
-                <div class="experience-item">
-                    <div class="experience-date">2022.9 - 2024.1</div>
-                    <div class="experience-title">"母校行"大学宣传活动</div>
-                    <p>参与策划并执行返校宣讲活动。从内容准备、联系母校到现场宣讲与答疑，全程参与，锻炼了项目策划、公开表达及解决实际问题的综合能力。</p>
+                    <div class="experience-item">
+                        <div class="experience-date">2022.9 - 2024.1</div>
+                        <div class="experience-title">"母校行"大学宣传活动</div>
+                        <p>参与策划并执行返校宣讲活动。从内容准备、联系母校到现场宣讲与答疑，全程参与，锻炼了项目策划、公开表达及解决实际问题的综合能力。</p>
+                    </div>
                 </div>
             </div>
         </section>
 
-        <!-- 中间交互区域 - 减小高度 -->
+        <!-- 中间交互区域 -->
         <section class="interaction-section" id="interaction-section"></section>
 
-        <!-- 项目展示区域 - 改为4个项目，每行两个 -->
+        <!-- 项目展示区域 -->
         <section class="projects-section">
             <div class="section-header animate-in" style="animation-delay:0.2s">
                 <h2 class="section-title">项目作品集</h2>
@@ -944,13 +1206,13 @@
             </div>
 
             <div class="projects-grid">
-                <!-- 项目1 - 带有翻转效果 -->
+                <!-- 项目1 -->
                 <div class="project-card animate-in" data-project="1" style="animation-delay:0.3s">
                     <div class="card-inner">
                         <div class="card-front">
                             <div class="project-number">01</div>
                             <h3 class="project-title">AIGC动画-进化文明</h3>
-                            <p class="project-description">自主策划并主导制作了一部从宇宙起源演进至星际文明的宏大叙事AIGC动画短片。</p>
+                            <p class="project-description">自主策划并主导制作了一部从宇宙起源演进至星际文明的宏大叙事AIGC动画短片，使用通义万相等AI工具生成视觉素材，通过DaVinci Resolve完成全片剪辑与节奏把控。</p>
                             <div class="project-tech">
                                 <span class="tech-tag">AIGC</span>
                                 <span class="tech-tag">通义万相</span>
@@ -962,16 +1224,17 @@
                         </div>
                         <div class="card-back">
                             <h3 class="project-title">AIGC动画-进化文明</h3>
-                            <p class="project-description">自主策划并主导制作了一部从宇宙起源演进至星际文明的宏大叙事AIGC动画短片。</p>
+                            <p class="project-description">这部AIGC动画短片展示了从宇宙大爆炸到星际文明的完整进化历程。通过精心设计的提示词序列控制AI生成内容，将138亿年的进化史诗浓缩为2分30秒的视听叙事。</p>
                             <ul class="project-features">
                                 <li><i class="fas fa-check"></i> 构建跨越138亿年的完整叙事与分镜设计</li>
                                 <li><i class="fas fa-check"></i> 运用文生图、图生视频提示词驱动AI生成</li>
                                 <li><i class="fas fa-check"></i> 完成后期剪辑、音画同步与节奏把控</li>
+                                <li><i class="fas fa-check"></i> 保持AI生成内容在视觉风格上的一致性</li>
                             </ul>
                             <div class="project-tech">
                                 <span class="tech-tag">AIGC</span>
                                 <span class="tech-tag">通义万相</span>
-                                <span class="tech-tag">DaVinci Resolve </span>
+                                <span class="tech-tag">DaVinci Resolve</span>
                                 <span class="tech-tag">叙事设计</span>
                             </div>
                             <div class="view-details">
@@ -987,7 +1250,7 @@
                         <div class="card-front">
                             <div class="project-number">02</div>
                             <h3 class="project-title">AE特效合成短片-怀旧游戏</h3>
-                            <p class="project-description">结合动态图形与视觉特效制作的风格化动作短片，强调冲击性转场、能量特效与高节奏的视觉叙事。</p>
+                            <p class="project-description">结合动态图形与视觉特效制作的风格化动作短片，强调冲击性转场、能量特效与高节奏的视觉叙事，模拟怀旧战斗游戏的视觉张力。</p>
                             <div class="project-tech">
                                 <span class="tech-tag">After Effects</span>
                                 <span class="tech-tag">动态设计</span>
@@ -999,11 +1262,12 @@
                         </div>
                         <div class="card-back">
                             <h3 class="project-title">AE特效合成短片-怀旧游戏</h3>
-                            <p class="project-description">独立创作的风格化动作视觉短片，通过AE特效与动态图形模拟怀旧战斗游戏的视觉张力，实现从分镜到合成的全流程制作。</p>
+                            <p class="project-description">独立创作的风格化动作视觉短片，通过AE特效与动态图形模拟怀旧战斗游戏的视觉张力，实现从分镜到合成的全流程制作，展现了高饱和度的霓虹色调和流畅的转场动画。</p>
                             <ul class="project-features">
                                 <li><i class="fas fa-check"></i> 打击感特效：冲击波、粒子爆发与动态模糊</li>
                                 <li><i class="fas fa-check"></i> 高速转场与文字动画的节奏化编辑</li>
                                 <li><i class="fas fa-check"></i> 风格化调色与镜头晃动模拟真实感</li>
+                                <li><i class="fas fa-check"></i> 应用时间重映射技术控制动画节奏与张力</li>
                             </ul>
                             <div class="project-tech">
                                 <span class="tech-tag">Adobe After Effects</span>
@@ -1024,7 +1288,7 @@
                         <div class="card-front">
                             <div class="project-number">03</div>
                             <h3 class="project-title">智能交通检测系统</h3>
-                            <p class="project-description">基于YOLO深度学习的智能交通检测系统，实现车辆识别、跟踪与统计，支持实时视频流处理与数据分析。</p>
+                            <p class="project-description">基于YOLO深度学习的智能交通检测系统，实现车辆识别、跟踪与统计，支持实时视频流处理与数据分析，应用于交通监控与管理场景。</p>
                             <div class="project-tech">
                                 <span class="tech-tag">YOLOv8</span>
                                 <span class="tech-tag">Django</span>
@@ -1036,7 +1300,7 @@
                         </div>
                         <div class="card-back">
                             <h3 class="project-title">智能交通检测系统</h3>
-                            <p class="project-description">基于YOLOv8深度学习模型开发的智能交通检测平台，支持车辆检测、跟踪、计数与统计，应用于交通监控与管理场景。</p>
+                            <p class="project-description">基于YOLOv8深度学习模型开发的智能交通检测平台，支持车辆检测、跟踪、计数与统计，提供完整的用户认证、图片/视频上传、实时检测和数据分析功能。</p>
                             <ul class="project-features">
                                 <li><i class="fas fa-check"></i> YOLOv8模型训练与部署，实现高精度车辆检测</li>
                                 <li><i class="fas fa-check"></i> 多目标跟踪算法，统计不重复车辆总数</li>
@@ -1078,12 +1342,14 @@
                         </div>
                         <div class="card-back">
                             <h3 class="project-title">Unity追逃游戏</h3>
-                            <p class="project-description">一款基于Unity引擎开发的3D单人追逃游戏，玩家扮演追逐者在精心设计的单一关卡中追捕由AI控制的逃跑者。游戏专注于核心玩法的打磨和优化。</p>
+                            <p class="project-description">一款基于Unity引擎开发的3D单人追逃游戏，玩家扮演追逐者在精心设计的单一关卡中追捕由AI控制的逃跑者。游戏采用NavMesh系统实现智能寻路，提供紧张刺激的追逃体验。</p>
                             <ul class="project-features">
                                 <li><i class="fas fa-check"></i> Unity3D引擎开发，支持PC平台</li>
                                 <li><i class="fas fa-check"></i> AI智能寻路系统，逃跑者根据环境动态调整路线</li>
                                 <li><i class="fas fa-check"></i> 玩家扮演追逐者，通过第三人称视角控制角色</li>
                                 <li><i class="fas fa-check"></i> 精心设计的单一关卡，专注于核心游戏体验</li>
+                                <li><i class="fas fa-check"></i> 动画系统，角色拥有流畅的跑动、跳跃动画</li>
+                                <li><i class="fas fa-check"></i> UI系统，显示游戏时间和攻击冷却</li>
                             </ul>
                             <div class="project-tech">
                                 <span class="tech-tag">Unity3D</span>
@@ -1129,7 +1395,7 @@
     }
     </script>
 
-    <!-- 神经网络交互脚本 -->
+    <!-- 完整的Three.js神经网络交互代码 -->
     <script type="module">
         import * as THREE from 'three';
         import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
@@ -1196,18 +1462,18 @@
         const starField = createStarfield();
         scene.add(starField);
 
-        // 创建控件但禁用缩放
+        // 创建控件
         const controls = new OrbitControls(camera, renderer.domElement);
         controls.enableDamping = true;
         controls.dampingFactor = 0.05;
         controls.rotateSpeed = 0.5;
-        controls.minDistance = 15; // 设置最小距离防止过度缩放
-        controls.maxDistance = 25; // 设置最大距离防止过度缩放
+        controls.minDistance = 15;
+        controls.maxDistance = 25;
         controls.autoRotate = true;
         controls.autoRotateSpeed = 0.15;
         controls.enablePan = false;
-        controls.enableZoom = false; // 禁用缩放功能
-        controls.minPolarAngle = Math.PI / 6; // 限制上下旋转角度
+        controls.enableZoom = false;
+        controls.minPolarAngle = Math.PI / 6;
         controls.maxPolarAngle = Math.PI / 2;
 
         const composer = new EffectComposer(renderer);
@@ -1221,6 +1487,7 @@
 
         composer.addPass(new OutputPass());
 
+        // 着色器代码
         const pulseUniforms = {
             uTime: { value: 0.0 },
             uPulsePositions: { value: [new THREE.Vector3(1e3, 1e3, 1e3), new THREE.Vector3(1e3, 1e3, 1e3), new THREE.Vector3(1e3, 1e3, 1e3)] },
@@ -1743,28 +2010,24 @@
             }
         }
 
-        // 修改为本地音乐文件
+        // 背景音乐功能
         function initBackgroundMusic() {
             const musicControl = document.getElementById('music-control');
             let audio = null;
             let isPlaying = false;
 
-            // 创建音频对象 - 使用本地文件
             function createAudio() {
                 if (audio) return audio;
 
                 audio = new Audio();
-                // 使用本地音乐文件，假设文件名为background-music.mp3
-                // 注意：在实际使用时，请确保将音乐文件放在与HTML文件相同的目录下
-                audio.src = 'background-music.mp3'; // 改为本地文件
+                audio.src = 'background-music.mp3';
                 audio.loop = true;
-                audio.volume = 0.3; // 降低音量
+                audio.volume = 0.3;
                 audio.preload = 'auto';
 
                 return audio;
             }
 
-            // 播放音乐
             function playMusic() {
                 if (!audio) {
                     audio = createAudio();
@@ -1776,7 +2039,6 @@
                     console.log('音乐播放成功');
                 }).catch(error => {
                     console.log('音乐播放失败:', error);
-                    // 如果自动播放失败，等待用户交互
                     const playOnInteraction = () => {
                         audio.play().then(() => {
                             isPlaying = true;
@@ -1790,7 +2052,6 @@
                 });
             }
 
-            // 暂停音乐
             function pauseMusic() {
                 if (audio) {
                     audio.pause();
@@ -1799,7 +2060,7 @@
                 }
             }
 
-            // 初始化音乐 - 尝试自动播放（延迟更长，确保页面加载完成）
+            // 延迟播放音乐
             setTimeout(() => {
                 playMusic();
             }, 2000);
@@ -1822,10 +2083,8 @@
             // 页面可见性变化时处理音乐
             document.addEventListener('visibilitychange', () => {
                 if (document.hidden && isPlaying) {
-                    // 页面隐藏时暂停音乐
                     pauseMusic();
                 } else if (!document.hidden && !isPlaying && audio) {
-                    // 页面重新显示时恢复播放
                     playMusic();
                 }
             });
@@ -1834,41 +2093,34 @@
         // 交互区域事件处理
         const interactionSection = document.getElementById('interaction-section');
 
-        // 鼠标按下事件 - 开始拖拽
+        // 鼠标按下事件
         interactionSection.addEventListener('mousedown', (e) => {
             isDragging = true;
             dragStartX = e.clientX;
             dragStartY = e.clientY;
-
-            // 阻止默认行为，避免文本选中
             e.preventDefault();
-
-            // 临时禁用自动旋转
             controls.autoRotate = false;
         });
 
-        // 鼠标移动事件 - 拖拽旋转
+        // 鼠标移动事件
         document.addEventListener('mousemove', (e) => {
             if (!isDragging) return;
 
             const deltaX = e.clientX - dragStartX;
             const deltaY = e.clientY - dragStartY;
 
-            // 更新相机旋转
             controls.autoRotate = false;
             controls.rotateLeft(-deltaX * 0.01);
             controls.rotateUp(-deltaY * 0.01);
 
-            // 更新起始位置
             dragStartX = e.clientX;
             dragStartY = e.clientY;
         });
 
-        // 鼠标释放事件 - 结束拖拽
+        // 鼠标释放事件
         document.addEventListener('mouseup', () => {
             if (isDragging) {
                 isDragging = false;
-                // 恢复自动旋转
                 setTimeout(() => {
                     controls.autoRotate = true;
                 }, 100);
@@ -1877,13 +2129,12 @@
 
         // 鼠标点击事件 - 触发脉冲
         interactionSection.addEventListener('click', (e) => {
-            // 如果拖拽距离很小，才触发脉冲（避免拖拽结束后误触发）
             const dragDistance = Math.sqrt(
                 Math.pow(e.clientX - dragStartX, 2) +
                 Math.pow(e.clientY - dragStartY, 2)
             );
 
-            if (dragDistance < 10) { // 10像素内的移动算点击
+            if (dragDistance < 10) {
                 triggerPulse(e.clientX, e.clientY);
 
                 // 添加视觉反馈
@@ -1913,9 +2164,8 @@
             }
         });
 
-        // 在画布上直接交互（边缘区域）
+        // 在画布上直接交互
         renderer.domElement.addEventListener('click', (e) => {
-            // 检查是否点击了内容区域
             const contentElements = document.querySelectorAll('.project-card, .resume-section, .content-container, .music-control, .interaction-section');
             let clickedContent = false;
 
@@ -1927,7 +2177,6 @@
                 }
             });
 
-            // 如果点击了内容区域，不触发脉冲
             if (clickedContent) return;
 
             triggerPulse(e.clientX, e.clientY);
@@ -1955,7 +2204,7 @@
             composer.render();
         }
 
-        // 项目详情面板功能 - 更新为4个项目
+        // 项目详情数据
         const projectData = {
             1: {
                 title: "AIGC动画-进化文明",
@@ -1968,9 +2217,8 @@
                     "后期合成：将AI素材剪辑成具有节奏感的完整短片"
                 ],
                 media: {
-                    type: "video", // 可以改为 "video" 或 "images"
+                    type: "video",
                     items: [
-                        // 如果是视频，只需一个项目
                         { url: "media/project1/evolution.mp4", type: "video" }
                     ]
                 }
@@ -1983,15 +2231,12 @@
                     "特效合成：使用Saber、Particular等插件制作能量特效",
                     "动态设计：流畅的转场动画和文字动态效果",
                     "色彩管理：高饱和度的霓虹色调营造科幻氛围",
-                    "节奏控制：精确的镜头切换和时间重映射技术",
-                    "应用时间重映射技术控制动画节奏与张力"
+                    "节奏控制：精确的镜头切换和时间重映射技术"
                 ],
                 media: {
-                    type: "video", // 可以改为 "video" 或 "images"
+                    type: "video",
                     items: [
-                        // 如果是视频，只需一个项目
                         { url: "media/project2/evolution.mp4", type: "video" }
-
                     ]
                 }
             },
@@ -2008,11 +2253,8 @@
                     "RESTful API设计，支持前后端分离架构"
                 ],
                 media: {
-                    type: "images", // 可以改为 "video" 或 "images"
+                    type: "images",
                     items: [
-                        // 如果是视频，只需一个项目
-                        // { url: "media/project3/detection_video.mp4", type: "video" }
-                        // 如果是图片，可以添加多个
                         { url: "media/project3/detection1.png", type: "image" },
                         { url: "media/project3/detection2.png", type: "image" },
                         { url: "media/project3/detection3.png", type: "image" },
@@ -2036,21 +2278,18 @@
                     "UI系统，显示游戏时间和攻击冷却"
                 ],
                 media: {
-                    type: "video", // 可以改为 "video" 或 "images"
+                    type: "video",
                     items: [
-
                         { url: "media/project4/chase_game_video.mp4", type: "video" }
-
-                       ]
+                    ]
                 }
             }
         };
 
+        // 初始化项目详情功能
         function initProjectDetails() {
-            // 项目卡片点击事件 - 点击卡片任何地方都打开详情
             document.querySelectorAll('.project-card').forEach(card => {
                 card.addEventListener('click', (e) => {
-                    // 如果点击的是"查看详情"按钮，则阻止事件冒泡（由卡片处理）
                     if (!e.target.closest('.view-details')) {
                         const projectId = card.getAttribute('data-project');
                         openProjectDetail(projectId);
@@ -2058,11 +2297,9 @@
                 });
             });
 
-            // 关闭面板事件
             document.getElementById('close-panel').addEventListener('click', closeProjectDetail);
             document.getElementById('panel-overlay').addEventListener('click', closeProjectDetail);
 
-            // 键盘事件
             document.addEventListener('keydown', (e) => {
                 if (e.key === 'Escape') {
                     closeProjectDetail();
@@ -2074,80 +2311,71 @@
             const project = projectData[projectId];
             if (!project) return;
 
-            // 更新面板内容
             document.getElementById('panel-title').textContent = project.title;
 
             const panelContent = document.getElementById('panel-content');
 
-            // 创建媒体展示区（支持视频或图片轮播）
-let mediaHtml = '<div class="detail-media">';
+            let mediaHtml = '<div class="detail-media">';
 
-if (project.media.type === 'video') {
-    // 单个视频
-    mediaHtml += `
-        <video id="project-video" controls autoplay muted loop style="width:100%; height:100%; object-fit:contain;">
-            <source src="${project.media.items[0].url}" type="video/mp4">
-            您的浏览器不支持视频标签。
-        </video>
-    `;
-} else if (project.media.type === 'images' && project.media.items.length > 0) {
-    // 多个图片 - 轮播图
-    mediaHtml += `
-        <div class="media-carousel">
-            <div class="carousel-images">
-                ${project.media.items.map((item, index) => `
-                    <div class="carousel-item ${index === 0 ? 'active' : ''}" data-index="${index}">
-                        <img src="${item.url}" alt="${project.title} - ${index + 1}" loading="lazy">
+            if (project.media.type === 'video') {
+                mediaHtml += `
+                    <video id="project-video" controls autoplay muted style="width:100%; height:100%; object-fit:contain;">
+                        <source src="${project.media.items[0].url}" type="video/mp4">
+                        您的浏览器不支持视频标签。
+                    </video>
+                `;
+            } else if (project.media.type === 'images' && project.media.items.length > 0) {
+                mediaHtml += `
+                    <div class="media-carousel">
+                        <div class="carousel-images">
+                            ${project.media.items.map((item, index) => `
+                                <div class="carousel-item ${index === 0 ? 'active' : ''}" data-index="${index}">
+                                    <img src="${item.url}" alt="${project.title} - ${index + 1}" loading="lazy">
+                                </div>
+                            `).join('')}
+                        </div>
+
+                        ${project.media.items.length > 1 ? `
+                            <div class="carousel-controls">
+                                <button class="carousel-prev"><i class="fas fa-chevron-left"></i></button>
+                                <button class="carousel-next"><i class="fas fa-chevron-right"></i></button>
+                            </div>
+                            <div class="carousel-indicators">
+                                ${project.media.items.map((_, index) => `
+                                    <button class="carousel-indicator ${index === 0 ? 'active' : ''}" data-index="${index}"></button>
+                                `).join('')}
+                            </div>
+                        ` : ''}
                     </div>
-                `).join('')}
-            </div>
+                `;
+            } else {
+                mediaHtml += `
+                    <div style="width:100%; height:100%; display:flex; align-items:center; justify-content:center; background:linear-gradient(135deg, rgba(255,120,50,0.1), rgba(255,179,71,0.1)); border-radius:20px;">
+                        <div style="text-align:center; color:#ff7832;">
+                            <i class="fas fa-image" style="font-size:3rem; margin-bottom:10px;"></i>
+                            <p>暂无媒体文件</p>
+                        </div>
+                    </div>
+                `;
+            }
 
-            ${project.media.items.length > 1 ? `
-                <div class="carousel-controls">
-                    <button class="carousel-prev"><i class="fas fa-chevron-left"></i></button>
-                    <button class="carousel-next"><i class="fas fa-chevron-right"></i></button>
-                </div>
-                <div class="carousel-indicators">
-                    ${project.media.items.map((_, index) => `
-                        <button class="carousel-indicator ${index === 0 ? 'active' : ''}" data-index="${index}"></button>
-                    `).join('')}
-                </div>
-            ` : ''}
-        </div>
-    `;
-} else {
-    // 备用：无媒体文件时
-    mediaHtml += `
-        <div style="width:100%; height:100%; display:flex; align-items:center; justify-content:center; background:linear-gradient(135deg, rgba(255,120,50,0.1), rgba(255,179,71,0.1)); border-radius:15px;">
-            <div style="text-align:center; color:#ff7832;">
-                <i class="fas fa-image" style="font-size:3rem; margin-bottom:10px;"></i>
-                <p>暂无媒体文件</p>
-            </div>
-        </div>
-    `;
-}
-
-mediaHtml += '</div>';
+            mediaHtml += '</div>';
 
             panelContent.innerHTML = `
                 ${mediaHtml}
                 <p class="detail-description">${project.description}</p>
-                <h3 style="color:#ff7832; margin-bottom:15px;">主要功能</h3>
+                <h3 style="color:#ff7832; margin-bottom:20px; font-size:1.8rem;">主要功能</h3>
                 <ul class="detail-features">
                     ${project.features.map(feature => `<li><i class="fas fa-check"></i> ${feature}</li>`).join('')}
                 </ul>
             `;
 
-            // 如果使用了轮播图，初始化轮播功能
             if (project.media.type === 'images' && project.media.items.length > 1) {
                 initCarousel();
             }
 
-            // 显示面板和遮罩
             document.getElementById('detail-panel').classList.add('active');
             document.getElementById('panel-overlay').classList.add('active');
-
-            // 禁用页面滚动
             document.body.style.overflow = 'hidden';
         }
 
@@ -2157,25 +2385,6 @@ mediaHtml += '</div>';
             document.body.style.overflow = 'auto';
         }
 
-        // 技能条动画
-        function initSkillBars() {
-            const skillBars = document.querySelectorAll('.skill-progress');
-
-            const observer = new IntersectionObserver((entries) => {
-                entries.forEach(entry => {
-                    if (entry.isIntersecting) {
-                        const skillBar = entry.target;
-                        const width = skillBar.getAttribute('data-width');
-                        skillBar.style.width = width + '%';
-                    }
-                });
-            }, { threshold: 0.5 });
-
-            skillBars.forEach(bar => {
-                observer.observe(bar);
-            });
-        }
-
         // 轮播图功能
         function initCarousel() {
             const carouselImages = document.querySelector('.carousel-images');
@@ -2183,6 +2392,8 @@ mediaHtml += '</div>';
             const indicators = document.querySelectorAll('.carousel-indicator');
             const prevBtn = document.querySelector('.carousel-prev');
             const nextBtn = document.querySelector('.carousel-next');
+
+            if (!carouselImages || items.length === 0) return;
 
             let currentIndex = 0;
 
@@ -2217,16 +2428,15 @@ mediaHtml += '</div>';
                 });
             });
 
-            // 自动轮播（可选）
+            // 自动轮播
             let autoplayInterval;
             function startAutoplay() {
                 autoplayInterval = setInterval(() => {
                     currentIndex = (currentIndex + 1) % items.length;
                     updateCarousel();
-                }, 4000); // 4秒切换一次
+                }, 4000);
             }
 
-            // 鼠标悬停时停止自动轮播
             const carouselContainer = document.querySelector('.media-carousel');
             if (carouselContainer) {
                 carouselContainer.addEventListener('mouseenter', () => {
@@ -2238,51 +2448,29 @@ mediaHtml += '</div>';
                 });
             }
 
-            // 开始自动轮播
             startAutoplay();
         }
 
-        // 全屏功能
-        function toggleFullscreen(element) {
-    if (!element) return;
+        // 技能条动画
+        function initSkillBars() {
+            const skillBars = document.querySelectorAll('.skill-progress');
 
-    if (!document.fullscreenElement) {
-        if (element.requestFullscreen) {
-            element.requestFullscreen();
-        } else if (element.webkitRequestFullscreen) { /* Safari */
-            element.webkitRequestFullscreen();
-        } else if (element.msRequestFullscreen) { /* IE11 */
-            element.msRequestFullscreen();
-        }
-    } else {
-        if (document.exitFullscreen) {
-            document.exitFullscreen();
-        } else if (document.webkitExitFullscreen) { /* Safari */
-            document.webkitExitFullscreen();
-        } else if (document.msExitFullscreen) { /* IE11 */
-            document.msExitFullscreen();
-        }
-    }
-}
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        const skillBar = entry.target;
+                        const width = skillBar.getAttribute('data-width');
+                        skillBar.style.width = width + '%';
+                    }
+                });
+            }, { threshold: 0.3 });
 
-        // 监听全屏变化
-        document.addEventListener('fullscreenchange', handleFullscreenChange);
-        document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
-        document.addEventListener('msfullscreenchange', handleFullscreenChange);
-
-        function handleFullscreenChange() {
-            const fullscreenBtn = document.querySelector('.fullscreen-btn i');
-            if (fullscreenBtn) {
-                if (document.fullscreenElement) {
-                    fullscreenBtn.classList.remove('fa-expand');
-                    fullscreenBtn.classList.add('fa-compress');
-                } else {
-                    fullscreenBtn.classList.remove('fa-compress');
-                    fullscreenBtn.classList.add('fa-expand');
-                }
-            }
+            skillBars.forEach(bar => {
+                observer.observe(bar);
+            });
         }
 
+        // 初始化
         function init() {
             createNetworkVisualization();
             animate();
@@ -2300,8 +2488,9 @@ mediaHtml += '</div>';
             setTimeout(() => {
                 document.querySelectorAll('.animate-in').forEach((el, index) => {
                     setTimeout(() => {
+                        el.style.animationDelay = (index * 0.1) + 's';
                         el.classList.add('animate-in');
-                    }, index * 100);
+                    }, index * 50);
                 });
             }, 500);
         }
@@ -2317,7 +2506,8 @@ mediaHtml += '</div>';
         }
         window.addEventListener('resize', onWindowResize);
 
-        init();
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', init);
     </script>
 </body>
 </html>
